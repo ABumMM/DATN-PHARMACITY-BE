@@ -1,6 +1,7 @@
 ﻿using backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace backend.Controllers
 {
@@ -9,6 +10,7 @@ namespace backend.Controllers
     public class PromotionController : ControllerBase
     {
         private readonly FinalContext db;
+
         public PromotionController(FinalContext _db)
         {
             db = _db;
@@ -17,23 +19,15 @@ namespace backend.Controllers
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<Promotions>>> GetAllPromotion(int pageNumber, int pageSize)
         {
-            if (pageNumber < 1)
+            if (pageNumber < 1 || pageSize < 1)
             {
                 return BadRequest(new
                 {
-                    message = "Số trang phải lớn hơn 0!",
+                    message = "Số trang và kích thước trang phải lớn hơn 0!",
                     status = 400
                 });
             }
 
-            if (pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
             if (db.Promotions == null)
             {
                 return Ok(new
@@ -42,7 +36,14 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var _data = await db.Promotions.ToListAsync();
+
+            var skip = (pageNumber - 1) * pageSize;
+            var totalRecords = await db.Promotions.CountAsync();
+            var _data = await db.Promotions
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
             if (!_data.Any())
             {
                 return Ok(new
@@ -51,9 +52,6 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var skip = (pageNumber - 1) * pageSize;
-
-            var totalRecords = db.Promotions.Count();
 
             return Ok(new
             {
@@ -81,22 +79,32 @@ namespace backend.Controllers
                     status = 404
                 });
             }
+
             var _data = await db.Promotions.Where(x => x.Id == id).ToListAsync();
+            if (!_data.Any())
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu không tồn tại!",
+                    status = 404
+                });
+            }
+
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
                 data = _data
-            }); ;
+            });
         }
 
         [HttpPost("add")]
         public async Task<ActionResult> AddPromotion([FromBody] Promotions promotion)
         {
-            var _promotion = await db.Promotions
-                .AnyAsync(x => x.Name.Equals(promotion.Name, StringComparison.OrdinalIgnoreCase));
+            var _promotionExists = await db.Promotions
+                .AnyAsync(x => x.Name.ToLower() == promotion.Name.ToLower());
 
-            if (_promotion)
+            if (_promotionExists)
             {
                 return BadRequest(new
                 {
@@ -128,8 +136,10 @@ namespace backend.Controllers
                     status = 400
                 });
             }
-            db.Entry(await db.Promotions.FirstOrDefaultAsync(x => x.Id == promotion.Id)).CurrentValues.SetValues(promotion);
+
+            db.Entry(_promotion).CurrentValues.SetValues(promotion);
             await db.SaveChangesAsync();
+
             return Ok(new
             {
                 message = "Sửa thành công!",
@@ -148,19 +158,22 @@ namespace backend.Controllers
                     status = 404
                 });
             }
+
             var _promotion = await db.Promotions.FindAsync(id);
             if (_promotion == null)
             {
                 return Ok(new
                 {
-                    message = "Dữ liệu trống!",
+                    message = "Dữ liệu không tồn tại!",
                     status = 404
                 });
             }
+
             try
             {
                 db.Promotions.Remove(_promotion);
                 await db.SaveChangesAsync();
+
                 return Ok(new
                 {
                     message = "Xóa thành công!",
@@ -171,13 +184,11 @@ namespace backend.Controllers
             {
                 return Ok(new
                 {
-                    message = "Lỗi rồi!",
+                    message = "Lỗi khi xóa dữ liệu!",
                     status = 400,
-                    data = e.Message
+                    error = e.Message
                 });
             }
         }
-
-
     }
 }
