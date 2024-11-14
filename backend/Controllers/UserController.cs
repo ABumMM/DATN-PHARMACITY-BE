@@ -1,12 +1,9 @@
 ﻿using backend.Helpers;
 using backend.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace backend.Controllers
 {
@@ -24,27 +21,9 @@ namespace backend.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Users>>> GetAllUser(int pageNumber, int pageSize)
+        public async Task<ActionResult<IEnumerable<Users>>> GetAllUser()
         {
-            if (pageNumber < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-
-            if (pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-
-            if (db.Users == null)
+            if (db.Users == null || db.Roles == null)
             {
                 return Ok(new
                 {
@@ -53,28 +32,26 @@ namespace backend.Controllers
                 });
             }
 
-            var skip = (pageNumber - 1) * pageSize;
+            var _data = from x in db.Users
+                        join role in db.Roles on x.IdRole equals role.Id
+                        orderby x.CreateAt descending
+                        select new
+                        {
+                            x.Id,
+                            x.Name,
+                            x.Email,
+                            x.Password,
+                            x.Phone,
+                            x.Address,
+                            x.CreateAt,
+                            x.IdRole,
+                            x.PathImg,
+                            nameRole = role.Name
+                        };
 
-            var _data = (from x in db.Users
-                         join role in db.Roles on x.IdRole equals role.Id
-                         select new
-                         {
-                             x.Id,
-                             x.Name,
-                             x.Email,
-                             x.Password,
-                             x.Phone,
-                             x.Address,
-                             x.CreateAt,
-                             x.IdRole,
-                             x.PathImg,
-                             nameRole = role.Name,
-                         })
-                         .Skip(skip)
-                         .Take(pageSize)
-                         .ToList();
+            var users = await _data.ToListAsync();
 
-            if (!_data.Any())
+            if (!users.Any())
             {
                 return Ok(new
                 {
@@ -82,19 +59,12 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-
-            var totalRecords = db.Users.Count();
 
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = _data,
-                pagination = new
-                {
-                    currentPage = pageNumber, pageSize, totalRecords,
-                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-                }
+                data = users
             });
         }
 

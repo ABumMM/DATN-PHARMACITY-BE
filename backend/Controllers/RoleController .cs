@@ -16,26 +16,10 @@ namespace backend.Controllers
         {
             db = _db;
         }
-        [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Roles>>> GetAllRole(int pageNumber, int pageSize)
-        {
-            if (pageNumber < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
 
-            if (pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Roles>>> GetAllRole()
+        {
             if (db.Roles == null)
             {
                 return Ok(new
@@ -44,16 +28,27 @@ namespace backend.Controllers
                     status = 404
                 });
             }
+
             var _data = await db.Roles.ToListAsync();
+
+            if (!_data.Any())
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
                 data = _data
-            }); ;
+            });
         }
-        [HttpGet]
 
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Roles>>> GetRole(Guid id)
         {
             if (db.Roles == null)

@@ -1,10 +1,8 @@
 ﻿using backend.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace backend.Controllers
 {
@@ -17,28 +15,20 @@ namespace backend.Controllers
         {
             db = _db;
         }
+
         [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Products>>> GetAllProduct(int pageNumber, int pageSize)
+        /*public async Task<ActionResult<IEnumerable<Products>>> GetAllProduct(int pageNumber, int pageSize)
         {
-            if (pageNumber < 1)
+            if (pageNumber < 1 || pageSize < 1)
             {
                 return BadRequest(new
                 {
-                    message = "Số trang phải lớn hơn 0!",
+                    message = "Số trang và kích thước trang phải lớn hơn 0!",
                     status = 400
                 });
             }
 
-            if (pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-
-            if (db.Products == null)
+            if (db.Products == null || db.Categories == null)
             {
                 return Ok(new
                 {
@@ -46,29 +36,45 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var _data = from product in db.Products join category in db.Categories on product.IdCategory equals category.Id orderby product.CreateAt descending select new
-            {
-                product.Id,
-                product.Name,
-                product.Price,
-                product.Quantity,
-                product.CreateAt,
-                product.Detail,
-                product.IdUser,
-                product.PathImg,
-                category.Slug,
-                product.Type,
-                product.IdCategory,
-                categoryName = category.Name
-            };
+
             var skip = (pageNumber - 1) * pageSize;
-            var totalRecords = db.Products.Count();
+            var totalRecords = await db.Products.CountAsync();
+
+            var _data = from product in db.Products
+                        join category in db.Categories on product.IdCategory equals category.Id
+                        orderby product.CreateAt descending
+                        select new
+                        {
+                            product.Id,
+                            product.Name,
+                            product.Price,
+                            product.Quantity,
+                            product.CreateAt,
+                            product.Detail,
+                            product.IdUser,
+                            product.PathImg,
+                            category.Slug,
+                            product.Type,
+                            product.IdCategory,
+                            categoryName = category.Name
+                        };
+
+            var pagedData = await _data.Skip(skip).Take(pageSize).ToListAsync();
+
+            if (!_data.Any())
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
 
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = _data,
+                data = pagedData,
                 pagination = new
                 {
                     currentPage = pageNumber,
@@ -77,7 +83,58 @@ namespace backend.Controllers
                     totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
                 }
             });
+        }*/
+
+        public async Task<ActionResult<IEnumerable<Products>>> GetAllProduct()
+        {
+            if (db.Products == null || db.Categories == null)
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+
+            var _data = from product in db.Products
+                        join category in db.Categories on product.IdCategory equals category.Id
+                        orderby product.CreateAt descending
+                        select new
+                        {
+                            product.Id,
+                            product.Name,
+                            product.Price,
+                            product.Quantity,
+                            product.CreateAt,
+                            product.Detail,
+                            product.IdUser,
+                            product.PathImg,
+                            category.Slug,
+                            product.Type,
+                            product.IdCategory,
+                            categoryName = category.Name
+                        };
+
+            var allData = await _data.ToListAsync();
+
+            if (!allData.Any())
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+
+            return Ok(new
+            {
+                message = "Lấy dữ liệu thành công!",
+                status = 200,
+                data = allData
+            });
         }
+
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Products>>> GetProduct(Guid id)
         {
@@ -107,6 +164,8 @@ namespace backend.Controllers
                 category
             });
         }
+
+
         [HttpPost("add")]
         public async Task<ActionResult> AddProduct([FromBody] Products product)
         {
@@ -119,6 +178,8 @@ namespace backend.Controllers
                 data = product
             });
         }
+
+
         [HttpPut("edit")]
 
         public async Task<ActionResult> Edit([FromBody] Products product)
@@ -140,8 +201,9 @@ namespace backend.Controllers
                 status = 200
             });
         }
-        [HttpDelete("delete")]
 
+
+        [HttpDelete("delete")]
         public async Task<ActionResult> Delete([FromBody] Guid id)
         {
             if (db.Products == null)

@@ -1,6 +1,5 @@
 ﻿
 using backend.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Final.Controllers
@@ -15,6 +14,8 @@ namespace Final.Controllers
         {
             _db = db;
         }
+
+
         [HttpGet("doanhthu")]
         public async Task<ActionResult> DoanhThu()
         {

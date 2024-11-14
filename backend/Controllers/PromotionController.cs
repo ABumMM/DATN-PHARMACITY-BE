@@ -16,18 +16,10 @@ namespace backend.Controllers
             db = _db;
         }
 
-        [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Promotions>>> GetAllPromotion(int pageNumber, int pageSize)
-        {
-            if (pageNumber < 1 || pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang và kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
 
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Promotions>>> GetAllPromotion()
+        {
             if (db.Promotions == null)
             {
                 return Ok(new
@@ -37,12 +29,7 @@ namespace backend.Controllers
                 });
             }
 
-            var skip = (pageNumber - 1) * pageSize;
-            var totalRecords = await db.Promotions.CountAsync();
-            var _data = await db.Promotions
-                .Skip(skip)
-                .Take(pageSize)
-                .ToListAsync();
+            var _data = await db.Promotions.ToListAsync();
 
             if (!_data.Any())
             {
@@ -57,16 +44,10 @@ namespace backend.Controllers
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = _data,
-                pagination = new
-                {
-                    currentPage = pageNumber,
-                    pageSize,
-                    totalRecords,
-                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-                }
+                data = _data
             });
         }
+
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Promotions>>> GetPromotion(Guid id)

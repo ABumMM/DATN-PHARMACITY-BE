@@ -15,25 +15,8 @@ namespace backend.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Categories>>> GetAllCategory(int pageNumber, int pageSize)
+        public async Task<ActionResult<IEnumerable<Categories>>> GetAllCategory()
         {
-            if (pageNumber < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-
-            if (pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
             if (db.Categories == null)
             {
                 return Ok(new
@@ -42,7 +25,9 @@ namespace backend.Controllers
                     status = 404
                 });
             }
+
             var _data = await db.Categories.ToListAsync();
+
             if (!_data.Any())
             {
                 return Ok(new
@@ -51,22 +36,15 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var skip = (pageNumber - 1) * pageSize;
-
-            var totalRecords = db.Categories.Count();
 
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = _data,
-                pagination = new
-                {
-                    currentPage = pageNumber, pageSize, totalRecords,
-                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-                }
+                data = _data
             });
         }
+
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Categories>>> GetCategory(Guid id)

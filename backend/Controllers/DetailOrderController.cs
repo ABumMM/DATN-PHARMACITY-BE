@@ -14,26 +14,11 @@ namespace backend.Controllers
         {
             db = _db;
         }
-        [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Detailorders>>> GetAllDetailOrder(int pageNumber, int pageSize)
-        {
-            if (pageNumber < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
 
-            if (pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
+
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Detailorders>>> GetAllDetailOrder()
+        {
             if (db.Detailorders == null)
             {
                 return Ok(new
@@ -43,8 +28,8 @@ namespace backend.Controllers
                 });
             }
 
-            var skip = (pageNumber - 1) * pageSize;
             var _data = await db.Detailorders.ToListAsync();
+
             if (!_data.Any())
             {
                 return Ok(new
@@ -53,25 +38,17 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-                
-            var totalRecords = db.Detailorders.Count();
 
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = _data,
-                pagination = new
-                {
-                    currentPage = pageNumber,
-                    pageSize,
-                    totalRecords,
-                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-                }
+                data = _data
             });
         }
-        [HttpGet]
 
+
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Detailorders>>> GetDetailOrder(Guid id)
         {
             if (db.Detailorders == null)
@@ -90,8 +67,9 @@ namespace backend.Controllers
                 data = _data
             }); ;
         }
-        [HttpPost("add")]
 
+
+        [HttpPost("add")]
         public async Task<ActionResult> AddDetail([FromBody] Detailorders detail)
         {
 
@@ -113,8 +91,9 @@ namespace backend.Controllers
                 data = detail
             });
         }
-        [HttpPut("edit")]
 
+
+        [HttpPut("edit")]
         public async Task<ActionResult> Edit([FromBody] Detailorders detail)
         {
             var _detail = await db.Detailorders.FindAsync(detail.Id);
@@ -134,8 +113,10 @@ namespace backend.Controllers
                 status = 200
             });
         }
-        [HttpDelete("delete")]
 
+
+
+        [HttpDelete("delete")]
         public async Task<ActionResult> Delete([FromBody] Guid id)
         {
             if (db.Detailorders == null)
@@ -176,8 +157,9 @@ namespace backend.Controllers
             }
         }
 
-        [HttpGet("getAllByOrder")]
 
+
+        [HttpGet("getAllByOrder")]
         public async Task<ActionResult<IEnumerable<Detailorders>>> GetAllByOrder(Guid idOrder)
         {
             var _data = from dt in db.Detailorders
@@ -204,8 +186,8 @@ namespace backend.Controllers
         }
 
 
-        [HttpPut("increase")]
 
+        [HttpPut("increase")]
         public async Task<ActionResult> Increase([FromBody] Guid id)
         {
             var _detail = await db.Detailorders.FindAsync(id);
@@ -226,8 +208,9 @@ namespace backend.Controllers
                 status = 200
             });
         }
-        [HttpPut("decrease")]
 
+
+        [HttpPut("decrease")]
         public async Task<ActionResult> Decrease([FromBody] Guid id)
         {
             var _detail = await db.Detailorders.FindAsync(id);

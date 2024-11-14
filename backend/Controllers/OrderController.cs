@@ -15,26 +15,9 @@ namespace backend.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Orders>>> GetAllOrder(int pageNumber, int pageSize)
+        public async Task<ActionResult<IEnumerable<Orders>>> GetAllOrder()
         {
-            if (pageNumber < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-
-            if (pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-            if (db.Users == null)
+            if (db.Orders == null || db.Users == null)
             {
                 return Ok(new
                 {
@@ -42,7 +25,7 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            
+
             var _data = from order in db.Orders
                         join user in db.Users on order.IdUser equals user.Id
                         orderby order.CreateAt descending
@@ -53,25 +36,28 @@ namespace backend.Controllers
                             order.Status,
                             user.Name,
                             order.Total,
-                            order.CreateAt,
+                            order.CreateAt
                         };
-            var skip = (pageNumber - 1) * pageSize;
-            var totalRecords = db.Orders.Count();
+
+            var allData = await _data.ToListAsync();
+
+            if (!allData.Any())
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
 
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = _data,
-                pagination = new
-                {
-                    currentPage = pageNumber,
-                    pageSize,
-                    totalRecords,
-                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-                }
+                data = allData
             });
         }
+
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Orders>>> GetOrder(Guid id)
