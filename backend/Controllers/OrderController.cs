@@ -14,9 +14,18 @@ namespace backend.Controllers
             db = _db;
         }
 
-        [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Orders>>> GetAllOrder()
+        /*[HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Orders>>> GetAllOrder(int pageNumber, int pageSize)
         {
+            if (pageNumber < 1 || pageSize < 1)
+            {
+                return BadRequest(new
+                {
+                    message = "Số trang và kích thước trang phải lớn hơn 0!",
+                    status = 400
+                });
+            }
+
             if (db.Orders == null || db.Users == null)
             {
                 return Ok(new
@@ -25,6 +34,9 @@ namespace backend.Controllers
                     status = 404
                 });
             }
+
+            var skip = (pageNumber - 1) * pageSize;
+            var totalRecords = await db.Orders.CountAsync();
 
             var _data = from order in db.Orders
                         join user in db.Users on order.IdUser equals user.Id
@@ -39,9 +51,9 @@ namespace backend.Controllers
                             order.CreateAt
                         };
 
-            var allData = await _data.ToListAsync();
+            var pagedData = await _data.Skip(skip).Take(pageSize).ToListAsync();
 
-            if (!allData.Any())
+            if (!_data.Any())
             {
                 return Ok(new
                 {
@@ -54,8 +66,45 @@ namespace backend.Controllers
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = allData
+                data = pagedData,
+                pagination = new
+                {
+                    currentPage = pageNumber,
+                    pageSize,
+                    totalRecords,
+                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+                }
             });
+        }*/
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Orders>>> GetAllOrder()
+        {
+            if (db.Users == null)
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+            var _data = from order in db.Orders
+                        join user in db.Users on order.IdUser equals user.Id
+                        orderby order.CreateAt descending
+                        select new
+                        {
+                            order.Id,
+                            order.IdUser,
+                            order.Status,
+                            user.Name,
+                            order.Total,
+                            order.CreateAt,
+                        };
+            return Ok(new
+            {
+                message = "Lấy dữ liệu thành công!",
+                status = 200,
+                data = _data
+            }); ;
         }
 
 

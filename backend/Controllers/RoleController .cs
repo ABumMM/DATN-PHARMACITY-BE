@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 
 namespace backend.Controllers 
@@ -17,9 +18,18 @@ namespace backend.Controllers
             db = _db;
         }
 
-        [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Roles>>> GetAllRole()
+        /*[HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Roles>>> GetAllRole(int pageNumber, int pageSize)
         {
+            if (pageNumber < 1 || pageSize < 1)
+            {
+                return BadRequest(new
+                {
+                    message = "Số trang và kích thước trang phải lớn hơn 0!",
+                    status = 400
+                });
+            }
+
             if (db.Roles == null)
             {
                 return Ok(new
@@ -29,7 +39,12 @@ namespace backend.Controllers
                 });
             }
 
-            var _data = await db.Roles.ToListAsync();
+            var skip = (pageNumber - 1) * pageSize;
+            var totalRecords = await db.Roles.CountAsync();
+            var _data = await db.Roles
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
 
             if (!_data.Any())
             {
@@ -45,8 +60,28 @@ namespace backend.Controllers
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
                 data = _data
-            });
+            }); ;
+        }*/
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Roles>>> GetAllRole()
+        {
+            if (db.Roles == null)
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+            var _data = await db.Roles.ToListAsync();
+            return Ok(new
+            {
+                message = "Lấy dữ liệu thành công!",
+                status = 200,
+                data = _data
+            }); ;
         }
+
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Roles>>> GetRole(Guid id)

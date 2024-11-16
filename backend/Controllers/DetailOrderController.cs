@@ -16,9 +16,18 @@ namespace backend.Controllers
         }
 
 
-        [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Detailorders>>> GetAllDetailOrder()
+        /*[HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Detailorders>>> GetAllDetailOrder(int pageNumber, int pageSize)
         {
+            if (pageNumber < 1 || pageSize < 1)
+            {
+                return BadRequest(new
+                {
+                    message = "Số trang và kích thước trang phải lớn hơn 0!",
+                    status = 400
+                });
+            }
+
             if (db.Detailorders == null)
             {
                 return Ok(new
@@ -28,7 +37,12 @@ namespace backend.Controllers
                 });
             }
 
-            var _data = await db.Detailorders.ToListAsync();
+            var skip = (pageNumber - 1) * pageSize;
+            var totalRecords = await db.Detailorders.CountAsync();
+            var _data = await db.Categories
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
 
             if (!_data.Any())
             {
@@ -43,10 +57,35 @@ namespace backend.Controllers
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = _data
+                data = _data,
+                pagination = new
+                {
+                    currentPage = pageNumber,
+                    pageSize,
+                    totalRecords,
+                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+                }
             });
+        }*/
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Detailorders>>> GetAllDetailOrder()
+        {
+            if (db.Detailorders == null)
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+            var _data = await db.Detailorders.ToListAsync();
+            return Ok(new
+            {
+                message = "Lấy dữ liệu thành công!",
+                status = 200,
+                data = _data
+            }); ;
         }
-
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Detailorders>>> GetDetailOrder(Guid id)

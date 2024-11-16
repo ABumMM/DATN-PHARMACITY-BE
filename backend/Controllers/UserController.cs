@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace backend.Controllers
 {
@@ -20,9 +22,18 @@ namespace backend.Controllers
             _config = cf;
         }
 
-        [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Users>>> GetAllUser()
+        /*[HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Users>>> GetAllUser(int pageNumber, int pageSize)
         {
+            if (pageNumber < 1 || pageSize < 1)
+            {
+                return BadRequest(new
+                {
+                    message = "Số trang và kích thước trang phải lớn hơn 0!",
+                    status = 400
+                });
+            }
+
             if (db.Users == null || db.Roles == null)
             {
                 return Ok(new
@@ -31,6 +42,8 @@ namespace backend.Controllers
                     status = 404
                 });
             }
+
+            var skip = (pageNumber - 1) * pageSize;
 
             var _data = from x in db.Users
                         join role in db.Roles on x.IdRole equals role.Id
@@ -49,9 +62,9 @@ namespace backend.Controllers
                             nameRole = role.Name
                         };
 
-            var users = await _data.ToListAsync();
+            var pagedData = await _data.Skip(skip).Take(pageSize).ToListAsync();
 
-            if (!users.Any())
+            if (!pagedData.Any())
             {
                 return Ok(new
                 {
@@ -60,12 +73,54 @@ namespace backend.Controllers
                 });
             }
 
+            var totalRecords = await db.Users.CountAsync();
+
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
                 status = 200,
-                data = users
+                data = pagedData,
+                pagination = new
+                {
+                    currentPage = pageNumber,
+                    pageSize,
+                    totalRecords,
+                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+                }
             });
+        }*/
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<Users>>> GetAllUser()
+        {
+            if (db.Users == null)
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+            var _data = from x in db.Users
+                        join role in db.Roles on x.IdRole equals role.Id
+                        select new
+                        {
+                            x.Id,
+                            x.Name,
+                            x.Email,
+                            x.Password,
+                            x.Phone,
+                            x.Address,
+                            x.CreateAt,
+                            x.IdRole,
+                            x.PathImg,
+                            nameRole = role.Name,
+                        };
+            return Ok(new
+            {
+                message = "Lấy dữ liệu thành công!",
+                status = 200,
+                data = _data
+            }); ;
         }
 
 
@@ -89,7 +144,7 @@ namespace backend.Controllers
             }); ;
         }
 
-        [HttpPost("register")]
+        /*[HttpPost("register")]
         public async Task<ActionResult> AddUser([FromBody] RegisterRequest request)
         {
             var existingUser = await db.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
@@ -140,8 +195,35 @@ namespace backend.Controllers
                 status = 200,
                 data = userResponse
             });
-        }
+        }*/
 
+
+        [HttpPost("register")]
+        public async Task<ActionResult> AddUser([FromBody] Users user)
+        {
+            var _user = await db.Users.FirstOrDefaultAsync(x => x.Email == user.Email);
+            if (_user != null)
+            {
+                return Ok(new
+                {
+                    message = "Email đã tồn tại!",
+                    status = 400
+                });
+            }
+            var role = await db.Roles.Where(x => x.Name.Equals("Guest")).FirstOrDefaultAsync();
+            if (user.IdRole == null)
+            {
+                user.IdRole = role.Id;
+            }
+            await db.Users.AddAsync(user);
+            await db.SaveChangesAsync();
+            return Ok(new
+            {
+                message = "Tạo thành công!",
+                status = 200,
+                data = user
+            });
+        }
 
         [HttpPut("edit")]
         public async Task<ActionResult> Edit([FromBody] Users user)
@@ -182,7 +264,6 @@ namespace backend.Controllers
 
 
         [HttpDelete("delete")]
-
         public async Task<ActionResult> Delete([FromBody] Guid id)
         {
             if (db.Users == null)
@@ -223,7 +304,7 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPost("login")]
+        /*[HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] Login user, [FromServices] IConfiguration _config)
         {
             var _user = (from nv in db.Users
@@ -276,9 +357,50 @@ namespace backend.Controllers
                 status = 200,
                 data = userResponse
             });
+        }*/
+        [HttpPost("login")]
+        public async Task<ActionResult> Login([FromBody] Login user)
+        {
+            var _user = (from nv in db.Users
+                         where nv.Email == user.email
+                         select new
+                         {
+                             nv.Id,
+                             nv.Password,
+                             nv.Email,
+                             nv.PathImg,
+                             nv.IdRole,
+                             nv.Address,
+                             nv.Name,
+                             nv.CreateAt,
+                             nv.Phone,
+                             role = db.Roles.Where(x => x.Id == nv.IdRole).FirstOrDefault().Name
+                         }).ToList();
+            if (_user.Count == 0)
+            {
+                return Ok(new
+                {
+                    message = "Tài khoản không tồn tại",
+                    status = 404
+                });
+            }
+            if (user.password != _user[0].Password)
+            {
+                return Ok(new
+                {
+                    message = "Sai mật khẩu",
+                    status = 400
+                });
+            }
+            return Ok(new
+            {
+                message = "Thành công",
+                status = 200,
+                data = _user,
+            });
         }
 
-        [HttpGet("info")]
+        /*[HttpGet("info")]
         public ActionResult GetDataFromToken(string token)
         {
             if (string.IsNullOrEmpty(token) || token == "undefined")
@@ -331,8 +453,47 @@ namespace backend.Controllers
                 data = sinhvien,
                 role = role?.Name ?? "Không có vai trò"
             });
+        }*/
+        [HttpGet("info")]
+        public ActionResult GetDataFromToken(string token)
+        {
+            if (token == "undefined")
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 400
+                });
+            }
+            string _token = token.Split(' ')[1];
+            if (_token == null)
+            {
+                return Ok(new
+                {
+                    message = "Token không đúng!",
+                    status = 400
+                });
+            }
+            var handle = new JwtSecurityTokenHandler();
+            string email = Regex.Match(JsonSerializer.Serialize(handle.ReadJwtToken(_token)), "emailaddress\",\"Value\":\"(.*?)\",").Groups[1].Value;
+            var sinhvien = db.Users.Where(x => x.Email == email).FirstOrDefault();
+            if (sinhvien == null)
+            {
+                return Ok(new
+                {
+                    message = "Người dùng không tồn tại!",
+                    status = 404
+                });
+            }
+            var role = db.Roles.Find(sinhvien.IdRole);
+            return Ok(new
+            {
+                message = "Lấy dữ liệu thành công!",
+                status = 200,
+                data = sinhvien,
+                role = role.Name
+            });
         }
-
 
         [HttpPost("changepass")]
         public ActionResult ChangePassword([FromBody] ChangePassword changePassword)
