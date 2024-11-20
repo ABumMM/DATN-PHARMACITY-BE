@@ -17,7 +17,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("all")]
-        /*public async Task<ActionResult<IEnumerable<Products>>> GetAllProduct(int pageNumber, int pageSize)
+        public async Task<ActionResult<IEnumerable<Products>>> GetAllProduct(int pageNumber, int pageSize)
         {
             if (pageNumber < 1 || pageSize < 1)
             {
@@ -83,8 +83,9 @@ namespace backend.Controllers
                     totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
                 }
             });
-        }*/
+        }
 
+        /*[HttpGet("all")]
         public async Task<ActionResult<IEnumerable<Products>>> GetAllProduct()
         {
             if (db.Products == null || db.Categories == null)
@@ -132,7 +133,7 @@ namespace backend.Controllers
                 status = 200,
                 data = allData
             });
-        }
+        }*/
 
 
         [HttpGet]

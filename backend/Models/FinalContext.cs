@@ -28,4 +28,6 @@ public partial class FinalContext : IdentityDbContext<Users, Roles, Guid>
     public virtual DbSet<Products> Products { get; set; }
 
     public virtual DbSet<Promotions> Promotions { get; set; }
+
+    
 }
