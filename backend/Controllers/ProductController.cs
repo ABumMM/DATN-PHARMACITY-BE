@@ -16,8 +16,8 @@ namespace backend.Controllers
             db = _db;
         }
 
-        [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Products>>> GetAllProduct(int pageNumber, int pageSize)
+        [HttpGet("alltoshop")]
+        public async Task<ActionResult<IEnumerable<Products>>> GetAllProductToShop(int pageNumber, int pageSize)
         {
             if (pageNumber < 1 || pageSize < 1)
             {
@@ -46,7 +46,7 @@ namespace backend.Controllers
                         select new
                         {
                             product.Id,
-                            product.Name,
+                            product.Name,   
                             product.Price,
                             product.Quantity,
                             product.CreateAt,
@@ -85,7 +85,7 @@ namespace backend.Controllers
             });
         }
 
-        /*[HttpGet("all")]
+        [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<Products>>> GetAllProduct()
         {
             if (db.Products == null || db.Categories == null)
@@ -133,7 +133,7 @@ namespace backend.Controllers
                 status = 200,
                 data = allData
             });
-        }*/
+        }
 
 
         [HttpGet]
