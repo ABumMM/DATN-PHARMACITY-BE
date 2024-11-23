@@ -1,6 +1,6 @@
 ﻿namespace backend.Models;
 
-public partial class Detailorders
+public class Detailorders
 {
     public Guid Id { get; set; }
 

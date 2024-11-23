@@ -29,5 +29,17 @@ public partial class FinalContext : IdentityDbContext<Users, Roles, Guid>
 
     public virtual DbSet<Promotions> Promotions { get; set; }
 
-    
+    public virtual DbSet<Suppliers> Suppliers { get; set; }
+
+    public virtual DbSet<Warehouses> Warehouses { get; set; }
+
+    public virtual DbSet<WarehouseExportDetails> WarehouseExportDetails { get; set; }
+
+    public virtual DbSet<WarehouseExports> WarehouseExports { get; set; }
+
+    public virtual DbSet<WarehouseReceiptDetails> WarehouseReceiptDetails { get; set; }
+
+    public virtual DbSet<WarehouseReceipts> WarehouseReceipts { get; set; }
+
+    public virtual DbSet<WarehouseProducts> WarehouseProducts { get; set; }
 }

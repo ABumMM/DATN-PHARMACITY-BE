@@ -1,6 +1,6 @@
 ﻿namespace backend.Models;
  
-public partial class Categories
+public class Categories
 {
     public Guid Id { get; set; }
 
