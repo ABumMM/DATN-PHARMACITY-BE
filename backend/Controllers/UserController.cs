@@ -1,9 +1,7 @@
-﻿using backend.Helpers;
-using backend.Models;
+﻿using backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -22,77 +20,10 @@ namespace backend.Controllers
             _config = cf;
         }
 
-        /*[HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Users>>> GetAllUser(int pageNumber, int pageSize)
-        {
-            if (pageNumber < 1 || pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang và kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-
-            if (db.Users == null || db.Roles == null)
-            {
-                return Ok(new
-                {
-                    message = "Dữ liệu trống!",
-                    status = 404
-                });
-            }
-
-            var skip = (pageNumber - 1) * pageSize;
-
-            var _data = from x in db.Users
-                        join role in db.Roles on x.IdRole equals role.Id
-                        orderby x.CreateAt descending
-                        select new
-                        {
-                            x.Id,
-                            x.Name,
-                            x.Email,
-                            x.Password,
-                            x.Phone,
-                            x.Address,
-                            x.CreateAt,
-                            x.IdRole,
-                            x.PathImg,
-                            nameRole = role.Name
-                        };
-
-            var pagedData = await _data.Skip(skip).Take(pageSize).ToListAsync();
-
-            if (!pagedData.Any())
-            {
-                return Ok(new
-                {
-                    message = "Dữ liệu trống!",
-                    status = 404
-                });
-            }
-
-            var totalRecords = await db.Users.CountAsync();
-
-            return Ok(new
-            {
-                message = "Lấy dữ liệu thành công!",
-                status = 200,
-                data = pagedData,
-                pagination = new
-                {
-                    currentPage = pageNumber,
-                    pageSize,
-                    totalRecords,
-                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-                }
-            });
-        }*/
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<Users>>> GetAllUser()
         {
-            if (db.Users == null)
+            if (db.ApplicationUsers == null)
             {
                 return Ok(new
                 {
@@ -100,8 +31,8 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var _data = from x in db.Users
-                        join role in db.Roles on x.IdRole equals role.Id
+            var _data = from x in db.ApplicationUsers
+                        join role in db.ApplicationRoles on x.IdRole equals role.Id
                         select new
                         {
                             x.Id,
@@ -127,7 +58,7 @@ namespace backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Users>>> GetUser(Guid id)
         {
-            if (db.Users == null)
+            if (db.ApplicationUsers == null)
             {
                 return Ok(new
                 {
@@ -135,7 +66,7 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var _data = await db.Users.Where(x => x.Id == id).ToListAsync();
+            var _data = await db.ApplicationUsers.Where(x => x.Id == id).ToListAsync();
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
@@ -201,7 +132,7 @@ namespace backend.Controllers
         [HttpPost("register")]
         public async Task<ActionResult> AddUser([FromBody] Users user)
         {
-            var _user = await db.Users.FirstOrDefaultAsync(x => x.Email == user.Email);
+            var _user = await db.ApplicationUsers.FirstOrDefaultAsync(x => x.Email == user.Email);
             if (_user != null)
             {
                 return Ok(new
@@ -210,12 +141,12 @@ namespace backend.Controllers
                     status = 400
                 });
             }
-            var role = await db.Roles.Where(x => x.Name.Equals("Guest")).FirstOrDefaultAsync();
+            var role = await db.ApplicationRoles.Where(x => x.Name.Equals("Guest")).FirstOrDefaultAsync();
             if (user.IdRole == null)
             {
                 user.IdRole = role.Id;
             }
-            await db.Users.AddAsync(user);
+            await db.ApplicationUsers.AddAsync(user);
             await db.SaveChangesAsync();
             return Ok(new
             {
@@ -228,7 +159,7 @@ namespace backend.Controllers
         [HttpPut("edit")]
         public async Task<ActionResult> Edit([FromBody] Users user)
         {
-            var _user = await db.Users.FindAsync(user.Id);
+            var _user = await db.ApplicationUsers.FindAsync(user.Id);
             if (_user == null)
             {
                 return Ok(new
@@ -237,8 +168,8 @@ namespace backend.Controllers
                     status = 400
                 });
             }
-            db.Entry(await db.Users.FirstOrDefaultAsync(x => x.Id == _user.Id)).CurrentValues.SetValues(user);
-            var __user = (from nv in db.Users
+            db.Entry(await db.ApplicationUsers.FirstOrDefaultAsync(x => x.Id == _user.Id)).CurrentValues.SetValues(user);
+            var __user = (from nv in db.ApplicationUsers
                           where nv.Id == user.Id
                           select new
                           {
@@ -251,7 +182,7 @@ namespace backend.Controllers
                               nv.Name,
                               nv.CreateAt,
                               nv.Phone,
-                              role = db.Roles.Where(x => x.Id == nv.IdRole).FirstOrDefault().Name
+                              role = db.ApplicationRoles.Where(x => x.Id == nv.IdRole).FirstOrDefault().Name
                           }).ToList();
             await db.SaveChangesAsync();
             return Ok(new
@@ -266,7 +197,7 @@ namespace backend.Controllers
         [HttpDelete("delete")]
         public async Task<ActionResult> Delete([FromBody] Guid id)
         {
-            if (db.Users == null)
+            if (db.ApplicationUsers == null)
             {
                 return Ok(new
                 {
@@ -274,7 +205,7 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var _user = await db.Users.FindAsync(id);
+            var _user = await db.ApplicationUsers.FindAsync(id);
             if (_user == null)
             {
                 return Ok(new
@@ -285,7 +216,7 @@ namespace backend.Controllers
             }
             try
             {
-                db.Users.Remove(_user);
+                db.ApplicationUsers.Remove(_user);
                 await db.SaveChangesAsync();
                 return Ok(new
                 {
@@ -361,7 +292,7 @@ namespace backend.Controllers
         [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] Login user)
         {
-            var _user = (from nv in db.Users
+            var _user = (from nv in db.ApplicationUsers
                          where nv.Email == user.email
                          select new
                          {
@@ -374,7 +305,7 @@ namespace backend.Controllers
                              nv.Name,
                              nv.CreateAt,
                              nv.Phone,
-                             role = db.Roles.Where(x => x.Id == nv.IdRole).FirstOrDefault().Name
+                             role = db.ApplicationRoles.Where(x => x.Id == nv.IdRole).FirstOrDefault().Name
                          }).ToList();
             if (_user.Count == 0)
             {
@@ -476,7 +407,7 @@ namespace backend.Controllers
             }
             var handle = new JwtSecurityTokenHandler();
             string email = Regex.Match(JsonSerializer.Serialize(handle.ReadJwtToken(_token)), "emailaddress\",\"Value\":\"(.*?)\",").Groups[1].Value;
-            var sinhvien = db.Users.Where(x => x.Email == email).FirstOrDefault();
+            var sinhvien = db.ApplicationUsers.Where(x => x.Email == email).FirstOrDefault();
             if (sinhvien == null)
             {
                 return Ok(new
@@ -485,7 +416,7 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var role = db.Roles.Find(sinhvien.IdRole);
+            var role = db.ApplicationRoles.Find(sinhvien.IdRole);
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
@@ -498,7 +429,7 @@ namespace backend.Controllers
         [HttpPost("changepass")]
         public ActionResult ChangePassword([FromBody] ChangePassword changePassword)
         {
-            var user = db.Users.Find(changePassword.idUser);
+            var user = db.ApplicationUsers.Find(changePassword.idUser);
             if (user == null)
             {
                 return Ok(new
@@ -515,7 +446,7 @@ namespace backend.Controllers
                     status = 400
                 });
             }
-            db.Entry(db.Users.FirstOrDefault(x => x.Id == user.Id)).CurrentValues.SetValues(user);
+            db.Entry(db.ApplicationUsers.FirstOrDefault(x => x.Id == user.Id)).CurrentValues.SetValues(user);
             db.SaveChanges();
             return Ok(new
             {

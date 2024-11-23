@@ -228,6 +228,9 @@ namespace backend.Migrations
                     b.Property<Guid?>("IdUser")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("IduserNavigationId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("PromotionId")
                         .HasColumnType("uniqueidentifier");
 
@@ -238,6 +241,8 @@ namespace backend.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IduserNavigationId");
 
                     b.HasIndex("PromotionId");
 
@@ -726,9 +731,15 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Orders", b =>
                 {
+                    b.HasOne("backend.Models.Users", "IduserNavigation")
+                        .WithMany("Orders")
+                        .HasForeignKey("IduserNavigationId");
+
                     b.HasOne("backend.Models.Promotions", "Promotion")
                         .WithMany()
                         .HasForeignKey("PromotionId");
+
+                    b.Navigation("IduserNavigation");
 
                     b.Navigation("Promotion");
                 });
@@ -866,6 +877,8 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Users", b =>
                 {
+                    b.Navigation("Orders");
+
                     b.Navigation("Products");
                 });
 

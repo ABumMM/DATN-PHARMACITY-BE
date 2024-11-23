@@ -14,6 +14,7 @@ namespace backend.Controllers
         {
             db = _db;
         }
+
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<Detailorders>>> GetAllDetailOrder()
         {
@@ -33,8 +34,9 @@ namespace backend.Controllers
                 data = _data
             }); ;
         }
-        [HttpGet]
 
+
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Detailorders>>> GetDetailOrder(Guid id)
         {
             if (db.Detailorders == null)
@@ -53,8 +55,9 @@ namespace backend.Controllers
                 data = _data
             }); ;
         }
-        [HttpPost("add")]
 
+
+        [HttpPost("add")]
         public async Task<ActionResult> AddDetail([FromBody] Detailorders detail)
         {
 
@@ -76,8 +79,9 @@ namespace backend.Controllers
                 data = detail
             });
         }
-        [HttpPut("edit")]
 
+
+        [HttpPut("edit")]
         public async Task<ActionResult> Edit([FromBody] Detailorders detail)
         {
             var _detail = await db.Detailorders.FindAsync(detail.Id);
@@ -97,8 +101,8 @@ namespace backend.Controllers
                 status = 200
             });
         }
-        [HttpDelete("delete")]
 
+        [HttpDelete("delete")]
         public async Task<ActionResult> Delete([FromBody] Guid id)
         {
             if (db.Detailorders == null)
@@ -140,7 +144,6 @@ namespace backend.Controllers
         }
 
         [HttpGet("getAllByOrder")]
-
         public async Task<ActionResult<IEnumerable<Detailorders>>> GetAllByOrder(Guid idOrder)
         {
             var _data = from dt in db.Detailorders

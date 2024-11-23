@@ -17,4 +17,6 @@ public class Orders
     public virtual Promotions? Promotion { get; set; }
 
     public virtual ICollection<Detailorders> Detailorders { get; set; } = new List<Detailorders>();
+
+    public virtual Users? IduserNavigation { get; set; }
 }

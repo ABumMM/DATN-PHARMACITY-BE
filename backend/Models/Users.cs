@@ -19,6 +19,6 @@ public class Users : IdentityUser<Guid>
     public DateTime? CreateAt { get; set; }
 
     public virtual Roles? IdRoleNavigation { get; set; }
-
+    public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
     public virtual ICollection<Products> Products { get; set; } = new List<Products>();
 }

@@ -14,55 +14,6 @@ namespace backend.Controllers
             db = _db;
         }
 
-        /*[HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Categories>>> GetAllCategory(int pageNumber, int pageSize)
-        {
-            if (pageNumber < 1 || pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang và kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-
-            if (db.Categories == null)
-            {
-                return Ok(new
-                {
-                    message = "Dữ liệu trống!",
-                    status = 404
-                });
-            }
-
-            var skip = (pageNumber - 1) * pageSize;
-            var totalRecords = await db.Categories.CountAsync();
-            var _data = await db.Categories
-                .Skip(skip)
-                .Take(pageSize)
-                .ToListAsync();
-
-            if (!_data.Any())
-            {
-                return Ok(new
-                {
-                    message = "Dữ liệu trống!",
-                    status = 404
-                });
-            }
-
-            return Ok(new
-            {
-                message = "Lấy dữ liệu thành công!",
-                status = 200,
-                data = _data,
-                pagination = new
-                {
-                    currentPage = pageNumber, pageSize, totalRecords,
-                    totalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-                }
-            });
-        }*/
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<Categories>>> GetAllCategory()
         {

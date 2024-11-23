@@ -18,54 +18,10 @@ namespace backend.Controllers
             db = _db;
         }
 
-        /*[HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<Roles>>> GetAllRole(int pageNumber, int pageSize)
-        {
-            if (pageNumber < 1 || pageSize < 1)
-            {
-                return BadRequest(new
-                {
-                    message = "Số trang và kích thước trang phải lớn hơn 0!",
-                    status = 400
-                });
-            }
-
-            if (db.Roles == null)
-            {
-                return Ok(new
-                {
-                    message = "Dữ liệu trống!",
-                    status = 404
-                });
-            }
-
-            var skip = (pageNumber - 1) * pageSize;
-            var totalRecords = await db.Roles.CountAsync();
-            var _data = await db.Roles
-                .Skip(skip)
-                .Take(pageSize)
-                .ToListAsync();
-
-            if (!_data.Any())
-            {
-                return Ok(new
-                {
-                    message = "Dữ liệu trống!",
-                    status = 404
-                });
-            }
-
-            return Ok(new
-            {
-                message = "Lấy dữ liệu thành công!",
-                status = 200,
-                data = _data
-            }); ;
-        }*/
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<Roles>>> GetAllRole()
         {
-            if (db.Roles == null)
+            if (db.ApplicationRoles == null)
             {
                 return Ok(new
                 {
@@ -73,7 +29,7 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var _data = await db.Roles.ToListAsync();
+            var _data = await db.ApplicationRoles.ToListAsync();
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
@@ -86,7 +42,7 @@ namespace backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Roles>>> GetRole(Guid id)
         {
-            if (db.Roles == null)
+            if (db.ApplicationRoles == null)
             {
                 return Ok(new
                 {
@@ -94,7 +50,7 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var _data = await db.Roles.Where(x => x.Id == id).ToListAsync();
+            var _data = await db.ApplicationRoles.Where(x => x.Id == id).ToListAsync();
             return Ok(new
             {
                 message = "Lấy dữ liệu thành công!",
@@ -106,7 +62,7 @@ namespace backend.Controllers
 
         public async Task<ActionResult> AddRole([FromBody] Roles role)
         {
-            var _role = await db.Roles.FirstOrDefaultAsync(x => String.Compare(x.Name, role.Name,StringComparison.OrdinalIgnoreCase) == 0);
+            var _role = await db.ApplicationRoles.FirstOrDefaultAsync(x => String.Compare(x.Name, role.Name,StringComparison.OrdinalIgnoreCase) == 0);
             if (_role != null)
             {
                 return Ok(new
@@ -115,7 +71,7 @@ namespace backend.Controllers
                     status = 400
                 });
             }
-            await db.Roles.AddAsync(role);
+            await db.ApplicationRoles.AddAsync(role);
             await db.SaveChangesAsync();
             return Ok(new
             {
@@ -128,7 +84,7 @@ namespace backend.Controllers
 
         public async Task<ActionResult> Edit([FromBody] Roles role)
         {
-            var _role = await db.Roles.FindAsync(role.Id);
+            var _role = await db.ApplicationRoles.FindAsync(role.Id);
             if (_role == null)
             {
                 return Ok(new
@@ -137,7 +93,7 @@ namespace backend.Controllers
                     status = 400
                 });
             }
-            db.Entry(await db.Roles.FirstOrDefaultAsync(x => x.Id == role.Id)).CurrentValues.SetValues(role);
+            db.Entry(await db.ApplicationRoles.FirstOrDefaultAsync(x => x.Id == role.Id)).CurrentValues.SetValues(role);
             await db.SaveChangesAsync();
             return Ok(new
             {
@@ -149,7 +105,7 @@ namespace backend.Controllers
 
         public async Task<ActionResult> Delete([FromBody] Guid id)
         {
-            if (db.Roles == null)
+            if (db.ApplicationRoles == null)
             {
                 return Ok(new
                 {
@@ -157,7 +113,7 @@ namespace backend.Controllers
                     status = 404
                 });
             }
-            var _role = await db.Roles.FindAsync(id);
+            var _role = await db.ApplicationRoles.FindAsync(id);
             if (_role == null)
             {
                 return Ok(new
@@ -168,7 +124,7 @@ namespace backend.Controllers
             }
             try
             {
-                db.Roles.Remove(_role);
+                db.ApplicationRoles.Remove(_role);
                 await db.SaveChangesAsync();
                 return Ok(new
                 {
