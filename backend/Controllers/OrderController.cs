@@ -177,10 +177,10 @@ namespace backend.Controllers
         [HttpGet("confirm")]
         public async Task<ActionResult> Confirm(Guid idUser, int status, int type, Guid? idPromotion = null)
         {
+            // Lấy thông tin đơn hàng
             var _order = await db.Orders
                 .Include(o => o.Promotion)
-                .Where(x => x.IdUser == idUser && x.Status == 0)
-                .FirstOrDefaultAsync();
+                .SingleOrDefaultAsync(x => x.IdUser == idUser && x.Status == 0);
 
             if (_order == null)
             {
@@ -191,40 +191,50 @@ namespace backend.Controllers
                 });
             }
 
-            decimal amount = 0;
-            var detail = await db.Detailorders.Where(x => x.IdOrder == _order.Id).ToListAsync();
-            if (detail.Count > 0)
-            {
-                foreach (var item in detail)
-                {
-                    amount += item.Price * item.Quantity;
-                }
-            }
+            // Tính tổng tiền từ chi tiết đơn hàng
+            var amount = await db.Detailorders
+                .Where(x => x.IdOrder == _order.Id)
+                .SumAsync(item => item.Price * item.Quantity);
 
+            // Xử lý mã khuyến mãi nếu có
             if (idPromotion.HasValue)
             {
                 var promotion = await db.Promotions.FindAsync(idPromotion.Value);
-                if (promotion != null && promotion.IsActive)
-                {
-                    amount -= amount * (promotion.DiscountPercentage / 100);
-                    _order.IdPromotion = promotion.Id;
-                }
-                else
+                if (promotion == null || !promotion.IsActive || promotion.StartDate > DateTime.Now || promotion.EndDate < DateTime.Now)
                 {
                     return BadRequest(new
                     {
-                        message = "Mã khuyến mãi không hợp lệ!",
+                        message = "Mã khuyến mãi không hợp lệ hoặc đã hết hạn!",
                         status = 400
                     });
                 }
+
+                if (promotion.Quantity <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Mã khuyến mãi đã hết số lượng sử dụng!",
+                        status = 400
+                    });
+                }
+
+                // Tính tổng tiền sau giảm giá
+                amount -= amount * (promotion.DiscountPercentage / 100);
+                _order.IdPromotion = promotion.Id;
+
+                // Giảm số lượng mã khuyến mãi
+                promotion.Quantity--;
+                db.Promotions.Update(promotion);
             }
 
+            // Cập nhật thông tin đơn hàng
             _order.CreateAt = DateTime.Now;
             _order.Total = amount;
             _order.Status = status;
 
-            db.Entry(await db.Orders.FirstOrDefaultAsync(x => x.Id == _order.Id)).CurrentValues.SetValues(_order);
+            db.Orders.Update(_order);
             await db.SaveChangesAsync();
+
             return Ok(new
             {
                 message = "Xác nhận đơn hàng thành công!",

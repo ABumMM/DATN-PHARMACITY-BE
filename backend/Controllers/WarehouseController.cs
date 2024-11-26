@@ -109,27 +109,46 @@ namespace backend.Controllers
             });
         }
 
-        // Xóa kho
         [HttpDelete("delete")]
-        public async Task<ActionResult> DeleteWarehouse(Guid id)
+        public async Task<ActionResult> Delete([FromBody] Guid id)
         {
-            var warehouse = await db.Warehouses.FindAsync(id);
-
-            if (warehouse == null)
+            if (db.Warehouses == null)
             {
-                return NotFound(new { message = "Không tìm thấy kho để xóa!" });
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
             }
-
-            db.Warehouses.Remove(warehouse);
-            await db.SaveChangesAsync();
-
-            return Ok(new
+            var _warehouse = await db.Warehouses.FindAsync(id);
+            if (_warehouse == null)
             {
-                message = "Xóa kho thành công!",
-                status = 200
-            });
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+            try
+            {
+                db.Warehouses.Remove(_warehouse);
+                await db.SaveChangesAsync();
+                return Ok(new
+                {
+                    message = "Xóa thành công!",
+                    status = 200
+                });
+            }
+            catch (Exception e)
+            {
+                return Ok(new
+                {
+                    message = "Lỗi rồi!",
+                    status = 400,
+                    data = e.Message
+                });
+            }
         }
-
 
     }
 }
