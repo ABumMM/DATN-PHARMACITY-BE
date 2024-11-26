@@ -182,7 +182,6 @@ namespace backend.Controllers
 
 
         [HttpPut("edit")]
-
         public async Task<ActionResult> Edit([FromBody] Products product)
         {
             var _product = await db.Products.FindAsync(product.Id);

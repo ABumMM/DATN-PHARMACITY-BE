@@ -86,25 +86,23 @@ namespace backend.Controllers
             });
         }
 
-        // Cập nhật thông tin kho
         [HttpPut("edit")]
-        public async Task<ActionResult> UpdateWarehouse(Guid id, Warehouses warehouse)
+        public async Task<ActionResult> Edit([FromBody] Warehouses warehouse)
         {
-            var existingWarehouse = await db.Warehouses.FindAsync(id);
-
-            if (existingWarehouse == null)
+            var _warehouse = await db.Warehouses.FindAsync(warehouse.Id);
+            if (_warehouse == null)
             {
-                return NotFound(new { message = "Kho không tồn tại!" });
+                return Ok(new
+                {
+                    message = "Dữ liệu không tồn tại!",
+                    status = 400
+                });
             }
-
-            existingWarehouse.Name = warehouse.Name;
-            existingWarehouse.Address = warehouse.Address;
-
+            db.Entry(await db.Warehouses.FirstOrDefaultAsync(x => x.Id == warehouse.Id)).CurrentValues.SetValues(warehouse);
             await db.SaveChangesAsync();
-
             return Ok(new
             {
-                message = "Cập nhật kho thành công!",
+                message = "Sửa thành công!",
                 status = 200
             });
         }

@@ -10,12 +10,12 @@ namespace backend.Controllers
     public class ReceiptExportController : ControllerBase
     {
         private readonly FinalContext db;
+
         public ReceiptExportController(FinalContext _db)
         {
             db = _db;
         }
 
-        // API thêm mới phiếu nhập kho
         [HttpPost("receipt")]
         public async Task<ActionResult> CreateReceipt(WarehouseReceipts receipt)
         {
@@ -34,7 +34,6 @@ namespace backend.Controllers
             });
         }
 
-        // API thêm mới phiếu xuất kho
         [HttpPost("export")]
         public async Task<ActionResult> CreateExport(WarehouseExports export)
         {
@@ -50,6 +49,46 @@ namespace backend.Controllers
             {
                 message = "Thêm phiếu xuất kho thành công!",
                 status = 200
+            });
+        }
+
+        [HttpGet("allreceipt")]
+        public async Task<ActionResult> GetAllReceipts()
+        {
+            if (db.WarehouseReceipts == null)
+            {
+                return NotFound(new { message = "Không có dữ liệu phiếu nhập kho." });
+            }
+
+            var receipts = await db.WarehouseReceipts
+                .Include(r => r.ReceiptDetails)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                message = "Lấy danh sách phiếu nhập kho thành công!",
+                status = 200,
+                data = receipts
+            });
+        }
+
+        [HttpGet("allexport")]
+        public async Task<ActionResult> GetAllExports()
+        {
+            if (db.WarehouseExports == null)
+            {
+                return NotFound(new { message = "Không có dữ liệu phiếu xuất kho." });
+            }
+
+            var exports = await db.WarehouseExports
+                .Include(e => e.ExportDetails)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                message = "Lấy danh sách phiếu xuất kho thành công!",
+                status = 200,
+                data = exports
             });
         }
     }

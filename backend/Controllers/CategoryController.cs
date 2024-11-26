@@ -77,7 +77,6 @@ namespace backend.Controllers
         }
 
         [HttpPut("edit")]
-
         public async Task<ActionResult> Edit([FromBody]Categories category)
         {
             var _category = await db.Categories.FindAsync(category.Id);

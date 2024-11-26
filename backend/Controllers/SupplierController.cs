@@ -88,50 +88,66 @@ namespace backend.Controllers
             });
         }
 
-        // Cập nhật thông tin nhà cung cấp
         [HttpPut("edit")]
-        public async Task<ActionResult> UpdateSupplier(Guid id, Suppliers supplier)
+        public async Task<ActionResult> Edit([FromBody] Suppliers supplier)
         {
-            var existingSupplier = await db.Suppliers.FindAsync(id);
-
-            if (existingSupplier == null)
+            var _supplier = await db.Suppliers.FindAsync(supplier.Id);
+            if (_supplier == null)
             {
-                return NotFound(new { message = "Nhà cung cấp không tồn tại!" });
+                return Ok(new
+                {
+                    message = "Dữ liệu không tồn tại!",
+                    status = 400
+                });
             }
-
-            existingSupplier.Name = supplier.Name;
-            existingSupplier.Address = supplier.Address;
-            existingSupplier.Phone = supplier.Phone;
-            existingSupplier.Email = supplier.Email;
-
+            db.Entry(await db.Suppliers.FirstOrDefaultAsync(x => x.Id == supplier.Id)).CurrentValues.SetValues(supplier);
             await db.SaveChangesAsync();
-
             return Ok(new
             {
-                message = "Cập nhật nhà cung cấp thành công!",
+                message = "Sửa thành công!",
                 status = 200
             });
         }
 
-        // Xóa nhà cung cấp
         [HttpDelete("delete")]
-        public async Task<ActionResult> DeleteSupplier(Guid id)
+        public async Task<ActionResult> Delete([FromBody] Guid id)
         {
-            var supplier = await db.Suppliers.FindAsync(id);
-
-            if (supplier == null)
+            if (db.Suppliers == null)
             {
-                return NotFound(new { message = "Không tìm thấy nhà cung cấp để xóa!" });
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
             }
-
-            db.Suppliers.Remove(supplier);
-            await db.SaveChangesAsync();
-
-            return Ok(new
+            var _supplier = await db.Suppliers.FindAsync(id);
+            if (_supplier == null)
             {
-                message = "Xóa nhà cung cấp thành công!",
-                status = 200
-            });
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
+            try
+            {
+                db.Suppliers.Remove(_supplier);
+                await db.SaveChangesAsync();
+                return Ok(new
+                {
+                    message = "Xóa thành công!",
+                    status = 200
+                });
+            }
+            catch (Exception e)
+            {
+                return Ok(new
+                {
+                    message = "Lỗi rồi!",
+                    status = 400,
+                    data = e.Message
+                });
+            }
         }
     }
 }
