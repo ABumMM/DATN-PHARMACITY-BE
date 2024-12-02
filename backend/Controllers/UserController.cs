@@ -75,60 +75,6 @@ namespace backend.Controllers
             }); ;
         }
 
-        /*[HttpPost("register")]
-        public async Task<ActionResult> AddUser([FromBody] RegisterRequest request)
-        {
-            var existingUser = await db.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
-            if (existingUser != null)
-            {
-                return BadRequest(new
-                {
-                    message = "Email đã tồn tại!",
-                    status = 400
-                });
-            }
-
-            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
-            {
-                return BadRequest(new
-                {
-                    message = "Email và mật khẩu không được để trống!",
-                    status = 400
-                });
-            }
-
-            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
-            var role = await db.Roles.FirstOrDefaultAsync(x => x.Name.Equals("Guest"));
-            var user = new Users
-            {
-                Name = request.FullName,
-                Email = request.Email,
-                Password = hashedPassword,
-                Phone = request.Phone,
-                IdRole = role?.Id,
-                CreateAt = DateTime.Now
-            };
-
-            await db.Users.AddAsync(user);
-            await db.SaveChangesAsync();
-
-            var userResponse = new
-            {
-                FullName = user.Name,
-                Email = user.Email,
-                Phone = user.Phone
-            };
-
-            return Ok(new
-            {
-                message = "Tạo tài khoản thành công!",
-                status = 200,
-                data = userResponse
-            });
-        }*/
-
-
         [HttpPost("register")]
         public async Task<ActionResult> AddUser([FromBody] Users user)
         {
@@ -155,6 +101,38 @@ namespace backend.Controllers
                 data = user
             });
         }
+        /*
+                [HttpPost("register")]
+                public async Task<ActionResult> AddUser([FromBody] Users user)
+                {
+                    var _user = await db.ApplicationUsers.FirstOrDefaultAsync(x => x.Email == user.Email);
+                    if (_user != null)
+                    {
+                        return Ok(new
+                        {
+                            message = "Email đã tồn tại!",
+                            status = 400
+                        });
+                    }
+
+                    // Mã hóa mật khẩu
+                    user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+
+                    var role = await db.ApplicationRoles.Where(x => x.Name.Equals("Guest")).FirstOrDefaultAsync();
+                    if (user.IdRole == null)
+                    {
+                        user.IdRole = role.Id;
+                    }
+                    await db.ApplicationUsers.AddAsync(user);
+                    await db.SaveChangesAsync();
+                    return Ok(new
+                    {
+                        message = "Tạo thành công!",
+                        status = 200,
+                        data = user
+                    });
+                }*/
+
 
         [HttpPut("edit")]
         public async Task<ActionResult> Edit([FromBody] Users user)
@@ -235,60 +213,6 @@ namespace backend.Controllers
             }
         }
 
-        /*[HttpPost("login")]
-        public async Task<ActionResult> Login([FromBody] Login user, [FromServices] IConfiguration _config)
-        {
-            var _user = (from nv in db.Users
-                         where nv.Email == user.email
-                         select new
-                         {
-                             nv.Id,
-                             nv.Password,
-                             nv.Email,
-                             nv.PathImg,
-                             nv.IdRole,
-                             nv.Address,
-                             nv.Name,
-                             nv.CreateAt,
-                             nv.Phone,
-                             role = db.Roles.Where(x => x.Id == nv.IdRole).FirstOrDefault().Name
-                         }).ToList();
-
-            if (_user.Count == 0)
-            {
-                return Ok(new
-                {
-                    message = "Tài khoản không tồn tại",
-                    status = 404
-                });
-            }
-
-            if (!BCrypt.Net.BCrypt.Verify(user.password, _user[0].Password))
-            {
-                return Ok(new
-                {
-                    message = "Sai mật khẩu",
-                    status = 400
-                });
-            }
-
-            var token = TokenHelper.Instance.CreateToken(_user[0].Email, _user[0].role, _config);
-
-            var userResponse = new
-            {
-                FullName = _user[0].Name,
-                Email = _user[0].Email,
-                Phone = _user[0].Phone,
-                Token = token
-            };
-
-            return Ok(new
-            {
-                message = "Đăng nhập thành công",
-                status = 200,
-                data = userResponse
-            });
-        }*/
         [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] Login user)
         {
@@ -331,60 +255,53 @@ namespace backend.Controllers
             });
         }
 
-        /*[HttpGet("info")]
-        public ActionResult GetDataFromToken(string token)
+       /* [HttpPost("login")]
+        public async Task<ActionResult> Login([FromBody] Login user)
         {
-            if (string.IsNullOrEmpty(token) || token == "undefined")
+            var _user = (from nv in db.ApplicationUsers
+                         where nv.Email == user.email
+                         select new
+                         {
+                             nv.Id,
+                             nv.Password,
+                             nv.Email,
+                             nv.PathImg,
+                             nv.IdRole,
+                             nv.Address,
+                             nv.Name,
+                             nv.CreateAt,
+                             nv.Phone,
+                             role = db.ApplicationRoles.Where(x => x.Id == nv.IdRole).FirstOrDefault().Name
+                         }).FirstOrDefault();
+
+            if (_user == null)
             {
                 return Ok(new
                 {
-                    message = "Dữ liệu trống!",
-                    status = 400
-                });
-            }
-
-            string _token = token.Split(' ')[1];
-            if (_token == null)
-            {
-                return Ok(new
-                {
-                    message = "Token không đúng!",
-                    status = 400
-                });
-            }
-
-            var handle = new JwtSecurityTokenHandler();
-            var jwtToken = handle.ReadJwtToken(_token);
-            var emailClaim = jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-
-            if (emailClaim == null)
-            {
-                return Ok(new
-                {
-                    message = "Token không hợp lệ!",
-                    status = 400
-                });
-            }
-
-            var sinhvien = db.Users.Where(x => x.Email == emailClaim).FirstOrDefault();
-            if (sinhvien == null)
-            {
-                return Ok(new
-                {
-                    message = "Người dùng không tồn tại!",
+                    message = "Tài khoản không tồn tại",
                     status = 404
                 });
             }
 
-            var role = db.Roles.Find(sinhvien.IdRole);
+            // Kiểm tra mật khẩu
+            if (!BCrypt.Net.BCrypt.Verify(user.password, _user.Password))
+            {
+                return Ok(new
+                {
+                    message = "Sai mật khẩu",
+                    status = 400
+                });
+            }
+
             return Ok(new
             {
-                message = "Lấy dữ liệu thành công!",
+                message = "Thành công",
                 status = 200,
-                data = sinhvien,
-                role = role?.Name ?? "Không có vai trò"
+                data = _user,
             });
         }*/
+
+
         [HttpGet("info")]
         public ActionResult GetDataFromToken(string token)
         {
@@ -426,7 +343,7 @@ namespace backend.Controllers
             });
         }
 
-        [HttpPost("changepass")]
+        /*[HttpPost("changepass")]
         public ActionResult ChangePassword([FromBody] ChangePassword changePassword)
         {
             var user = db.ApplicationUsers.Find(changePassword.idUser);
@@ -453,16 +370,43 @@ namespace backend.Controllers
                 message = "Thay đổi mật khẩu thành công!",
                 status = 200
             });
+        }*/
+
+        [HttpPost("changepass")]
+        public ActionResult ChangePassword([FromBody] ChangePassword changePassword)
+        {
+            var user = db.ApplicationUsers.Find(changePassword.idUser);
+            if (user == null)
+            {
+                return Ok(new
+                {
+                    message = "Người dùng không tồn tại!",
+                    status = 404
+                });
+            }
+
+            // Kiểm tra mật khẩu cũ
+            if (!BCrypt.Net.BCrypt.Verify(changePassword.oldPassword, user.Password))
+            {
+                return Ok(new
+                {
+                    message = "Mật khẩu cũ không đúng!",
+                    status = 400
+                });
+            }
+
+            // Mã hóa mật khẩu mới
+            user.Password = BCrypt.Net.BCrypt.HashPassword(changePassword.newPassword);
+            db.Entry(db.ApplicationUsers.FirstOrDefault(x => x.Id == user.Id)).CurrentValues.SetValues(user);
+            db.SaveChanges();
+            return Ok(new
+            {
+                message = "Thay đổi mật khẩu thành công!",
+                status = 200
+            });
         }
 
     }
-/*    public class RegisterRequest
-    {
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string Phone { get; set; }
-    }*/
 
     public class Login
     {

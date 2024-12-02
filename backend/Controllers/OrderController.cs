@@ -92,7 +92,7 @@ namespace backend.Controllers
         {
             await db.Orders.AddAsync(order);
             await db.SaveChangesAsync();
-            var _data = await db.Orders.Where(x => x.Status == 0).Where(x => x.IdUser == order.IdUser).FirstOrDefaultAsync();
+            var _data = await db.Orders.Where(x => x.Status == null).Where(x => x.IdUser == order.IdUser).FirstOrDefaultAsync();
             return Ok(new
             {
                 message = "Tạo thành công!",
@@ -148,7 +148,7 @@ namespace backend.Controllers
         public async Task<ActionResult<Orders>> GetOrderNotPayment(Guid idUser)
         {
             decimal amount = 0;
-            var _data = await db.Orders.Where(x => x.IdUser == idUser).Where(x => x.Status == 0).FirstOrDefaultAsync();
+            var _data = await db.Orders.Where(x => x.IdUser == idUser).Where(x => x.Status == null).FirstOrDefaultAsync();
             if (_data == null)
             {
                 return Ok(new
@@ -174,7 +174,7 @@ namespace backend.Controllers
             });
         }
 
-        [HttpGet("confirm")]
+        /*[HttpGet("confirm")]
         public async Task<ActionResult> Confirm(Guid idUser, int status, int type, Guid? idPromotion = null)
         {
             // Lấy thông tin đơn hàng
@@ -240,10 +240,43 @@ namespace backend.Controllers
                 message = "Xác nhận đơn hàng thành công!",
                 status = 200
             });
+        }*/
+
+        [HttpGet("confirm")]
+
+        public async Task<ActionResult> Confirm(Guid idUser, int status, int type)
+        {
+            var _order = await db.Orders.Where(x => x.IdUser == idUser).Where(x => x.Status == null).FirstOrDefaultAsync();
+            decimal amount = 0;
+            if (_order == null)
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu không tồn tại!",
+                    status = 400
+                });
+            }
+            var detail = await db.Detailorders.Where(x => x.IdOrder == _order.Id).ToListAsync();
+            if (detail.Count > 0)
+            {
+                foreach (var item in detail)
+                {
+                    amount += item.Price * item.Quantity;
+                }
+            }
+            _order.CreateAt = DateTime.Now;
+            _order.Total = amount;
+            _order.Status = status;
+            db.Entry(await db.Orders.FirstOrDefaultAsync(x => x.Id == _order.Id)).CurrentValues.SetValues(_order);
+            await db.SaveChangesAsync();
+            return Ok(new
+            {
+                message = "Sửa thành công!",
+                status = 200
+            });
         }
 
         [HttpGet("getAllOrder")]
-
         public async Task<ActionResult<IEnumerable<Orders>>> GetAllOrderByIdUser(Guid idUser)
         {
             if (db.Users == null)
