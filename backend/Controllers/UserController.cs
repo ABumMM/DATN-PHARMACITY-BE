@@ -75,8 +75,8 @@ namespace backend.Controllers
             }); ;
         }
 
-        [HttpPost("register")]
-        public async Task<ActionResult> AddUser([FromBody] Users user)
+        [HttpPost("registergoogle")]
+        public async Task<ActionResult> AddUserGoogle([FromBody] Users user)
         {
             var _user = await db.ApplicationUsers.FirstOrDefaultAsync(x => x.Email == user.Email);
             if (_user != null)
@@ -101,37 +101,37 @@ namespace backend.Controllers
                 data = user
             });
         }
-        /*
-                [HttpPost("register")]
-                public async Task<ActionResult> AddUser([FromBody] Users user)
+
+        [HttpPost("register")]
+        public async Task<ActionResult> AddUser([FromBody] Users user)
+        {
+            var _user = await db.ApplicationUsers.FirstOrDefaultAsync(x => x.Email == user.Email);
+            if (_user != null)
+            {
+                return Ok(new
                 {
-                    var _user = await db.ApplicationUsers.FirstOrDefaultAsync(x => x.Email == user.Email);
-                    if (_user != null)
-                    {
-                        return Ok(new
-                        {
-                            message = "Email đã tồn tại!",
-                            status = 400
-                        });
-                    }
+                    message = "Email đã tồn tại!",
+                    status = 400
+                });
+            }
 
-                    // Mã hóa mật khẩu
-                    user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+            // Mã hóa mật khẩu
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
 
-                    var role = await db.ApplicationRoles.Where(x => x.Name.Equals("Guest")).FirstOrDefaultAsync();
-                    if (user.IdRole == null)
-                    {
-                        user.IdRole = role.Id;
-                    }
-                    await db.ApplicationUsers.AddAsync(user);
-                    await db.SaveChangesAsync();
-                    return Ok(new
-                    {
-                        message = "Tạo thành công!",
-                        status = 200,
-                        data = user
-                    });
-                }*/
+            var role = await db.ApplicationRoles.Where(x => x.Name.Equals("Guest")).FirstOrDefaultAsync();
+            if (user.IdRole == null)
+            {
+                user.IdRole = role.Id;
+            }
+            await db.ApplicationUsers.AddAsync(user);
+            await db.SaveChangesAsync();
+            return Ok(new
+            {
+                message = "Tạo thành công!",
+                status = 200,
+                data = user
+            });
+        }
 
 
         [HttpPut("edit")]
@@ -213,8 +213,8 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPost("login")]
-        public async Task<ActionResult> Login([FromBody] Login user)
+        [HttpPost("logingoogle")]
+        public async Task<ActionResult> LoginGoogle([FromBody] Login user)
         {
             var _user = (from nv in db.ApplicationUsers
                          where nv.Email == user.email
@@ -255,7 +255,7 @@ namespace backend.Controllers
             });
         }
 
-       /* [HttpPost("login")]
+        [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] Login user)
         {
             var _user = (from nv in db.ApplicationUsers
@@ -299,7 +299,7 @@ namespace backend.Controllers
                 status = 200,
                 data = _user,
             });
-        }*/
+        }
 
 
         [HttpGet("info")]
