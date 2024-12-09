@@ -68,50 +68,48 @@ namespace backend.Controllers
         {
             try
             {
-                string filePath = Path.Combine(_backupPath, fileName);
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                    return BadRequest(new { Message = "Tên file không được để trống." });
+                }
 
-                // Kiểm tra xem file sao lưu có tồn tại không
+                string filePath = Path.Combine(_backupPath, fileName);
                 if (!System.IO.File.Exists(filePath))
-                    return NotFound(new { Message = "File sao lưu không tồn tại!" });
+                {
+                    return NotFound(new { Message = "File backup không tồn tại.", FileName = fileName });
+                }
 
                 string connectionString = _configuration.GetConnectionString("dbContext");
                 string databaseName = new SqlConnectionStringBuilder(connectionString).InitialCatalog;
 
-                // Chuyển sang cơ sở dữ liệu master trước khi phục hồi
-                string sqlSwitchToMaster = "USE master;";
-
-                // Câu lệnh phục hồi cơ sở dữ liệu
                 string sqlRestoreCommand = @$"
             ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
             RESTORE DATABASE [{databaseName}]
             FROM DISK = '{filePath}'
-            WITH REPLACE, RECOVERY;";  // Phục hồi và áp dụng RECOVERY
+            WITH REPLACE;
+            ALTER DATABASE [{databaseName}] SET MULTI_USER;";
 
-                // Kết nối và thực thi lệnh SQL
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
+                ExecuteSqlCommand(sqlRestoreCommand, connectionString);
 
-                    // Thực thi lệnh chuyển sang cơ sở dữ liệu master và phục hồi
-                    using (var sqlCommand = new SqlCommand(sqlSwitchToMaster + sqlRestoreCommand, connection))
-                    {
-                        sqlCommand.ExecuteNonQuery();
-                    }
-                }
-
-                return Ok(new { Message = "Phục hồi thành công!" });
+                return Ok(new { Message = "Khôi phục cơ sở dữ liệu thành công!", FileName = fileName });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "Phục hồi thất bại!", Error = ex.Message });
+                return StatusCode(500, new { Message = "Khôi phục cơ sở dữ liệu thất bại!", Error = ex.Message });
             }
         }
 
 
 
+
         private void ExecuteSqlCommand(string command, string connectionString)
         {
-            using (var connection = new SqlConnection(connectionString))
+            var builder = new SqlConnectionStringBuilder(connectionString)
+            {
+                InitialCatalog = "master"
+            };
+
+            using (var connection = new SqlConnection(builder.ConnectionString))
             {
                 connection.Open();
                 using (var sqlCommand = new SqlCommand(command, connection))
@@ -120,5 +118,6 @@ namespace backend.Controllers
                 }
             }
         }
+
     }
 }
