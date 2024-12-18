@@ -38,6 +38,11 @@ builder.Services.AddDbContext<FinalContext>(options =>
 });
 builder.Services.AddCors();
 
+// Cấu hình Background Service gửi email tự động
+builder.Services.AddScoped<SendEmailBackgroundService>();
+builder.Services.AddHostedService<SendEmailBackgroundService>();
+
+
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
