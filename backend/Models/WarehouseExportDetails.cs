@@ -6,6 +6,7 @@
         public Guid ExportId { get; set; }
         public Guid ProductId { get; set; }
         public int Quantity { get; set; }
+        public DateTime ExpirationDate { get; set; }
 
         public virtual WarehouseExports Export { get; set; } = null!;
         
