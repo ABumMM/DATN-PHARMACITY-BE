@@ -3,8 +3,8 @@
     public class WarehouseReceiptDetails
     {
         public Guid Id { get; set; }
-        public Guid? IdReceipt { get; set; }
-        public Guid? IdProduct { get; set; }
+        public Guid IdReceipt { get; set; }
+        public Guid IdProduct { get; set; }
         public int Quantity { get; set; }
         public DateTime? ExpirationDate { get; set; }
 

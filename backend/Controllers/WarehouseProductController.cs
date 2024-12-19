@@ -32,8 +32,9 @@ namespace backend.Controllers
                 ProductId = wp.IdProduct,
                 ProductName = wp.IdProductNavigation.Name,
                 Quantity = wp.Quantity,
-                ExpirationDate = wp.ExpirationDate?.ToString("yyyy-MM-dd") ?? "Không có ngày hết hạn"
+                ExpirationDate = wp.ExpirationDate.ToString("yyyy-MM-dd") ?? "Không có ngày hết hạn"
             });
+
 
             return Ok(new
             {

@@ -58,7 +58,7 @@ public class SendEmailBackgroundService : BackgroundService
             string warningMessage = "Cảnh báo: Các sản phẩm sau đây sắp hết hạn:\n";
             foreach (var wp in expiringProducts)
             {
-                warningMessage += $"Sản phẩm: {wp.IdProductNavigation?.Name}, Hạn sử dụng: {wp.ExpirationDate?.ToShortDateString()} tại kho: {wp.IdWarehouseNavigation?.Name}\n";
+                warningMessage += $"Sản phẩm: {wp.IdProductNavigation?.Name}, Hạn sử dụng: {wp.ExpirationDate.ToShortDateString()} tại kho: {wp.IdWarehouseNavigation?.Name}\n";
             }
 
             await SendEmailAsync("anhnguyen20031609@gmail.com", "Cảnh báo sản phẩm sắp hết hạn!", warningMessage);

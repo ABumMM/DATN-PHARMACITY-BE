@@ -37,38 +37,36 @@ namespace backend.Controllers
 
                 foreach (var detail in receipt.ReceiptDetails)
                 {
+                    var expirationDate = detail.ExpirationDate ?? DateTime.MaxValue;
                     var warehouseProduct = await db.WarehouseProducts
                         .FirstOrDefaultAsync(wp => wp.IdWarehouse == receipt.IdWarehouse && wp.IdProduct == detail.IdProduct);
 
                     if (warehouseProduct == null)
                     {
-                        // Nếu sản phẩm chưa có trong kho, thêm sản phẩm mới
                         db.WarehouseProducts.Add(new WarehouseProducts
                         {
                             Id = Guid.NewGuid(),
                             IdWarehouse = receipt.IdWarehouse,
                             IdProduct = detail.IdProduct,
                             Quantity = detail.Quantity,
-                            ExpirationDate = detail.ExpirationDate // Kiểm tra ExpirationDate nullable
+                            ExpirationDate = expirationDate
                         });
                     }
                     else
                     {
-                        if (warehouseProduct.ExpirationDate != detail.ExpirationDate)
+                        if (warehouseProduct.ExpirationDate != expirationDate)
                         {
-                            // Nếu ngày hết hạn khác nhau, thêm sản phẩm mới với ngày hết hạn mới
                             db.WarehouseProducts.Add(new WarehouseProducts
                             {
                                 Id = Guid.NewGuid(),
                                 IdWarehouse = receipt.IdWarehouse,
                                 IdProduct = detail.IdProduct,
                                 Quantity = detail.Quantity,
-                                ExpirationDate = detail.ExpirationDate // Kiểm tra ExpirationDate nullable
+                                ExpirationDate = expirationDate
                             });
                         }
                         else
                         {
-                            // Cộng thêm số lượng vào kho nếu ngày hết hạn trùng
                             warehouseProduct.Quantity += detail.Quantity;
                         }
                     }
@@ -97,7 +95,6 @@ namespace backend.Controllers
             }
         }
 
-
         // Tạo phiếu xuất kho
         [HttpPost("export")]
         public async Task<ActionResult> CreateExport([FromBody] WarehouseExports export)
@@ -116,6 +113,7 @@ namespace backend.Controllers
 
                 foreach (var detail in export.ExportDetails)
                 {
+                    var expirationDate = detail.ExpirationDate;
                     var warehouseProduct = await db.WarehouseProducts
                         .FirstOrDefaultAsync(wp => wp.IdWarehouse == export.IdWarehouse && wp.IdProduct == detail.IdProduct);
 
@@ -149,70 +147,114 @@ namespace backend.Controllers
 
 
         // Lấy tất cả phiếu nhập kho
-        [HttpGet("allreceipt")]
+        [HttpGet("receipts/all")]
         public async Task<ActionResult> GetAllReceipts()
         {
-            var receipts = await db.WarehouseReceipts
-                .Include(r => r.ReceiptDetails)
-                .ThenInclude(rd => rd.IdProductNavigation)
-                .Include(r => r.IdWarehouseNavigation)
-                .Include(r => r.IdSupplierNavigation)
-                .ToListAsync();
+            if (db.WarehouseReceipts == null || db.WarehouseReceiptDetails == null || db.Warehouses == null || db.Suppliers == null)
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
 
-            if (!receipts.Any())
-                return NotFound(new { message = "Không có dữ liệu phiếu nhập kho." });
+            var _data = from receipt in db.WarehouseReceipts
+                        join warehouse in db.Warehouses on receipt.IdWarehouse equals warehouse.Id
+                        join supplier in db.Suppliers on receipt.IdSupplier equals supplier.Id
+                        orderby receipt.ReceiptDate descending
+                        select new
+                        {
+                            receipt.Id,
+                            receipt.ReceiptDate,
+                            warehouseName = warehouse.Name,
+                            supplierName = supplier.Name,
+                            receiptDetails = (from detail in db.WarehouseReceiptDetails
+                                              where detail.IdReceipt == receipt.Id
+                                              join product in db.Products on detail.IdProduct equals product.Id
+                                              select new
+                                              {
+                                                  detail.IdProduct,
+                                                  productName = product.Name,
+                                                  detail.Quantity,
+                                                  detail.ExpirationDate
+                                              }).ToList() 
+                        };
+
+            var allData = await _data.ToListAsync();
+
+            if (!allData.Any())
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
 
             return Ok(new
             {
                 message = "Lấy danh sách phiếu nhập kho thành công!",
                 status = 200,
-                data = receipts.Select(receipt => new
-                {
-                    receiptId = receipt.Id,
-                    warehouseName = receipt.IdWarehouseNavigation.Name,
-                    supplierName = receipt.IdSupplierNavigation.Name,
-                    receiptDetails = receipt.ReceiptDetails.Select(rd => new
-                    {
-                        productId = rd.IdProduct,
-                        productName = rd.IdProductNavigation.Name,
-                        quantity = rd.Quantity,
-                        expirationDate = rd.ExpirationDate?.ToString("yyyy-MM-dd") // Nullable DateTime
-                    })
-                })
+                data = allData
             });
         }
 
 
+
         // Lấy tất cả phiếu xuất kho
-        [HttpGet("allexport")]
+        [HttpGet("exports/all")]
         public async Task<ActionResult> GetAllExports()
         {
-            var exports = await db.WarehouseExports
-                .Include(e => e.ExportDetails)
-                .ThenInclude(ed => ed.IdProductNavigation)
-                .Include(e => e.IdWarehouseNavigation)
-                .ToListAsync();
+            if (db.WarehouseExports == null || db.WarehouseExportDetails == null || db.Warehouses == null)
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
 
-            if (!exports.Any())
-                return NotFound(new { message = "Không có dữ liệu phiếu xuất kho." });
+            var _data = from export in db.WarehouseExports
+                        join warehouse in db.Warehouses on export.IdWarehouse equals warehouse.Id
+                        orderby export.ExportDate descending
+                        select new
+                        {
+                            export.Id,
+                            export.ExportDate,
+                            warehouseName = warehouse.Name,
+                            exportDetails = (from detail in db.WarehouseExportDetails
+                                             where detail.IdExport == export.Id
+                                             join product in db.Products on detail.IdProduct equals product.Id
+                                             select new
+                                             {
+                                                 detail.IdProduct,
+                                                 productName = product.Name,
+                                                 detail.Quantity,
+                                                 detail.ExpirationDate
+                                             }).ToList() 
+                        };
+
+            var allData = await _data.ToListAsync(); 
+
+            if (!allData.Any())
+            {
+                return Ok(new
+                {
+                    message = "Dữ liệu trống!",
+                    status = 404
+                });
+            }
 
             return Ok(new
             {
                 message = "Lấy danh sách phiếu xuất kho thành công!",
                 status = 200,
-                data = exports.Select(export => new
-                {
-                    exportId = export.Id,
-                    warehouseName = export.IdWarehouseNavigation.Name,
-                    exportDetails = export.ExportDetails.Select(ed => new
-                    {
-                        productId = ed.IdProduct,
-                        productName = ed.IdProductNavigation.Name,
-                        quantity = ed.Quantity
-                    })
-                })
+                data = allData
             });
         }
+
+
 
     }
 }
