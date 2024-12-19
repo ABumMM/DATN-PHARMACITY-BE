@@ -42,30 +42,33 @@ namespace backend.Controllers
 
                     if (warehouseProduct == null)
                     {
+                        // Nếu sản phẩm chưa có trong kho, thêm sản phẩm mới
                         db.WarehouseProducts.Add(new WarehouseProducts
                         {
                             Id = Guid.NewGuid(),
                             IdWarehouse = receipt.IdWarehouse,
                             IdProduct = detail.IdProduct,
                             Quantity = detail.Quantity,
-                            ExpirationDate = detail.ExpirationDate
+                            ExpirationDate = detail.ExpirationDate // Kiểm tra ExpirationDate nullable
                         });
                     }
                     else
                     {
                         if (warehouseProduct.ExpirationDate != detail.ExpirationDate)
                         {
+                            // Nếu ngày hết hạn khác nhau, thêm sản phẩm mới với ngày hết hạn mới
                             db.WarehouseProducts.Add(new WarehouseProducts
                             {
                                 Id = Guid.NewGuid(),
                                 IdWarehouse = receipt.IdWarehouse,
                                 IdProduct = detail.IdProduct,
                                 Quantity = detail.Quantity,
-                                ExpirationDate = detail.ExpirationDate
+                                ExpirationDate = detail.ExpirationDate // Kiểm tra ExpirationDate nullable
                             });
                         }
                         else
                         {
+                            // Cộng thêm số lượng vào kho nếu ngày hết hạn trùng
                             warehouseProduct.Quantity += detail.Quantity;
                         }
                     }
@@ -93,6 +96,7 @@ namespace backend.Controllers
                 return StatusCode(500, new { message = $"Có lỗi xảy ra: {ex.Message}" });
             }
         }
+
 
         // Tạo phiếu xuất kho
         [HttpPost("export")]
@@ -143,6 +147,7 @@ namespace backend.Controllers
             }
         }
 
+
         // Lấy tất cả phiếu nhập kho
         [HttpGet("allreceipt")]
         public async Task<ActionResult> GetAllReceipts()
@@ -166,10 +171,17 @@ namespace backend.Controllers
                     receiptId = receipt.Id,
                     warehouseName = receipt.IdWarehouseNavigation.Name,
                     supplierName = receipt.IdSupplierNavigation.Name,
-                    receiptDetails = receipt.ReceiptDetails
+                    receiptDetails = receipt.ReceiptDetails.Select(rd => new
+                    {
+                        productId = rd.IdProduct,
+                        productName = rd.IdProductNavigation.Name,
+                        quantity = rd.Quantity,
+                        expirationDate = rd.ExpirationDate?.ToString("yyyy-MM-dd") // Nullable DateTime
+                    })
                 })
             });
         }
+
 
         // Lấy tất cả phiếu xuất kho
         [HttpGet("allexport")]
@@ -192,9 +204,15 @@ namespace backend.Controllers
                 {
                     exportId = export.Id,
                     warehouseName = export.IdWarehouseNavigation.Name,
-                    exportDetails = export.ExportDetails
+                    exportDetails = export.ExportDetails.Select(ed => new
+                    {
+                        productId = ed.IdProduct,
+                        productName = ed.IdProductNavigation.Name,
+                        quantity = ed.Quantity
+                    })
                 })
             });
         }
+
     }
 }
