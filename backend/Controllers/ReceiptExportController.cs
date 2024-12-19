@@ -25,11 +25,11 @@ namespace backend.Controllers
             using var transaction = await db.Database.BeginTransactionAsync();
             try
             {
-                var warehouse = await db.Warehouses.FindAsync(receipt.WarehouseId);
+                var warehouse = await db.Warehouses.FindAsync(receipt.IdWarehouse);
                 if (warehouse == null)
                     return NotFound(new { message = "Kho hàng không tồn tại." });
 
-                var supplier = await db.Suppliers.FindAsync(receipt.SupplierId);
+                var supplier = await db.Suppliers.FindAsync(receipt.IdSupplier);
                 if (supplier == null)
                     return NotFound(new { message = "Nhà cung cấp không tồn tại." });
 
@@ -38,38 +38,34 @@ namespace backend.Controllers
                 foreach (var detail in receipt.ReceiptDetails)
                 {
                     var warehouseProduct = await db.WarehouseProducts
-                        .FirstOrDefaultAsync(wp => wp.WarehouseId == receipt.WarehouseId && wp.ProductId == detail.ProductId);
+                        .FirstOrDefaultAsync(wp => wp.IdWarehouse == receipt.IdWarehouse && wp.IdProduct == detail.IdProduct);
 
                     if (warehouseProduct == null)
                     {
-                        // Nếu không có sản phẩm trong kho, tạo một lô mới cho sản phẩm với hạn sử dụng
                         db.WarehouseProducts.Add(new WarehouseProducts
                         {
                             Id = Guid.NewGuid(),
-                            WarehouseId = receipt.WarehouseId,
-                            ProductId = detail.ProductId,
+                            IdWarehouse = receipt.IdWarehouse,
+                            IdProduct = detail.IdProduct,
                             Quantity = detail.Quantity,
                             ExpirationDate = detail.ExpirationDate
                         });
                     }
                     else
                     {
-                        // Nếu sản phẩm đã có trong kho, kiểm tra hạn sử dụng có khác không
                         if (warehouseProduct.ExpirationDate != detail.ExpirationDate)
                         {
-                            // Nếu khác, tạo một lô mới với hạn sử dụng mới
                             db.WarehouseProducts.Add(new WarehouseProducts
                             {
                                 Id = Guid.NewGuid(),
-                                WarehouseId = receipt.WarehouseId,
-                                ProductId = detail.ProductId,
+                                IdWarehouse = receipt.IdWarehouse,
+                                IdProduct = detail.IdProduct,
                                 Quantity = detail.Quantity,
                                 ExpirationDate = detail.ExpirationDate
                             });
                         }
                         else
                         {
-                            // Nếu cùng hạn sử dụng, cộng dồn số lượng vào lô cũ
                             warehouseProduct.Quantity += detail.Quantity;
                         }
                     }
@@ -108,7 +104,7 @@ namespace backend.Controllers
             using var transaction = await db.Database.BeginTransactionAsync();
             try
             {
-                var warehouse = await db.Warehouses.FindAsync(export.WarehouseId);
+                var warehouse = await db.Warehouses.FindAsync(export.IdWarehouse);
                 if (warehouse == null)
                     return NotFound(new { message = "Kho hàng không tồn tại." });
 
@@ -117,10 +113,10 @@ namespace backend.Controllers
                 foreach (var detail in export.ExportDetails)
                 {
                     var warehouseProduct = await db.WarehouseProducts
-                        .FirstOrDefaultAsync(wp => wp.WarehouseId == export.WarehouseId && wp.ProductId == detail.ProductId);
+                        .FirstOrDefaultAsync(wp => wp.IdWarehouse == export.IdWarehouse && wp.IdProduct == detail.IdProduct);
 
                     if (warehouseProduct == null || warehouseProduct.Quantity < detail.Quantity)
-                        return BadRequest(new { message = $"Không đủ số lượng sản phẩm (ID: {detail.ProductId}) trong kho để xuất." });
+                        return BadRequest(new { message = $"Không đủ số lượng sản phẩm (ID: {detail.IdProduct}) trong kho để xuất." });
 
                     warehouseProduct.Quantity -= detail.Quantity;
                 }
@@ -153,9 +149,9 @@ namespace backend.Controllers
         {
             var receipts = await db.WarehouseReceipts
                 .Include(r => r.ReceiptDetails)
-                .ThenInclude(rd => rd.Product)
-                .Include(r => r.Warehouse)
-                .Include(r => r.Supplier)
+                .ThenInclude(rd => rd.IdProductNavigation)
+                .Include(r => r.IdWarehouseNavigation)
+                .Include(r => r.IdSupplierNavigation)
                 .ToListAsync();
 
             if (!receipts.Any())
@@ -165,10 +161,11 @@ namespace backend.Controllers
             {
                 message = "Lấy danh sách phiếu nhập kho thành công!",
                 status = 200,
-                data = receipts.Select(receipt => new {
+                data = receipts.Select(receipt => new
+                {
                     receiptId = receipt.Id,
-                    warehouseName = receipt.Warehouse.Name,
-                    supplierName = receipt.Supplier.Name,
+                    warehouseName = receipt.IdWarehouseNavigation.Name,
+                    supplierName = receipt.IdSupplierNavigation.Name,
                     receiptDetails = receipt.ReceiptDetails
                 })
             });
@@ -180,8 +177,8 @@ namespace backend.Controllers
         {
             var exports = await db.WarehouseExports
                 .Include(e => e.ExportDetails)
-                .ThenInclude(ed => ed.Product)
-                .Include(e => e.Warehouse)
+                .ThenInclude(ed => ed.IdProductNavigation)
+                .Include(e => e.IdWarehouseNavigation)
                 .ToListAsync();
 
             if (!exports.Any())
@@ -191,9 +188,10 @@ namespace backend.Controllers
             {
                 message = "Lấy danh sách phiếu xuất kho thành công!",
                 status = 200,
-                data = exports.Select(export => new {
+                data = exports.Select(export => new
+                {
                     exportId = export.Id,
-                    warehouseName = export.Warehouse.Name,
+                    warehouseName = export.IdWarehouseNavigation.Name,
                     exportDetails = export.ExportDetails
                 })
             });

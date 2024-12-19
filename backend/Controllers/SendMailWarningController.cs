@@ -39,15 +39,14 @@ public class SendEmailBackgroundService : BackgroundService
     {
         var currentDate = DateTime.Now;
 
-        using (var scope = _serviceScopeFactory.CreateScope()) // Tạo scope mới để inject FinalContext
+        using (var scope = _serviceScopeFactory.CreateScope())
         {
             var _db = scope.ServiceProvider.GetRequiredService<FinalContext>();
 
-            // Lấy tất cả sản phẩm trong kho có hạn sử dụng dưới 30 ngày
             var expiringProducts = await _db.WarehouseProducts
                 .Where(wp => wp.ExpirationDate <= currentDate.AddDays(30))
-                .Include(wp => wp.Product)
-                .Include(wp => wp.Warehouse)
+                .Include(wp => wp.IdProductNavigation)
+                .Include(wp => wp.IdWarehouseNavigation)
                 .ToListAsync();
 
             if (!expiringProducts.Any())
@@ -59,10 +58,9 @@ public class SendEmailBackgroundService : BackgroundService
             string warningMessage = "Cảnh báo: Các sản phẩm sau đây sắp hết hạn:\n";
             foreach (var wp in expiringProducts)
             {
-                warningMessage += $"Sản phẩm: {wp.Product.Name}, Hạn sử dụng: {wp.ExpirationDate.ToShortDateString()} tại kho: {wp.Warehouse.Name}\n";
+                warningMessage += $"Sản phẩm: {wp.IdProductNavigation?.Name}, Hạn sử dụng: {wp.ExpirationDate?.ToShortDateString()} tại kho: {wp.IdWarehouseNavigation?.Name}\n";
             }
 
-            // Gửi email cảnh báo
             await SendEmailAsync("anhnguyen20031609@gmail.com", "Cảnh báo sản phẩm sắp hết hạn!", warningMessage);
         }
     }

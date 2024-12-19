@@ -20,19 +20,19 @@ namespace backend.Controllers
         public async Task<IActionResult> GetAllWarehouseProducts()
         {
             var warehouseProducts = await db.WarehouseProducts
-                .Include(wp => wp.Warehouse)
-                .Include(wp => wp.Product)
+                .Include(wp => wp.IdWarehouseNavigation)
+                .Include(wp => wp.IdProductNavigation)
                 .ToListAsync();
 
             var result = warehouseProducts.Select(wp => new
             {
                 WarehouseProductId = wp.Id,
-                WarehouseId = wp.WarehouseId,
-                WarehouseName = wp.Warehouse.Name,
-                ProductId = wp.ProductId,
-                ProductName = wp.Product.Name,
+                WarehouseId = wp.IdWarehouse,
+                WarehouseName = wp.IdWarehouseNavigation.Name,
+                ProductId = wp.IdProduct,
+                ProductName = wp.IdProductNavigation.Name,
                 Quantity = wp.Quantity,
-                ExpirationDate = wp.ExpirationDate.ToString("yyyy-MM-dd")
+                ExpirationDate = wp.ExpirationDate?.ToString("yyyy-MM-dd") ?? "Không có ngày hết hạn"
             });
 
             return Ok(new
