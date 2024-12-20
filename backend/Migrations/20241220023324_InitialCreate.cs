@@ -154,19 +154,19 @@ namespace backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    WarehouseId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdWarehouse = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ExportDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IdWarehouseNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_WarehouseExports", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WarehouseExports_Warehouses_WarehouseId",
-                        column: x => x.WarehouseId,
+                        name: "FK_WarehouseExports_Warehouses_IdWarehouseNavigationId",
+                        column: x => x.IdWarehouseNavigationId,
                         principalTable: "Warehouses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -174,26 +174,26 @@ namespace backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    WarehouseId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SupplierId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdWarehouse = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdSupplier = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ReceiptDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IdWarehouseNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    IdSupplierNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_WarehouseReceipts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WarehouseReceipts_Suppliers_SupplierId",
-                        column: x => x.SupplierId,
+                        name: "FK_WarehouseReceipts_Suppliers_IdSupplierNavigationId",
+                        column: x => x.IdSupplierNavigationId,
                         principalTable: "Suppliers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_WarehouseReceipts_Warehouses_WarehouseId",
-                        column: x => x.WarehouseId,
+                        name: "FK_WarehouseReceipts_Warehouses_IdWarehouseNavigationId",
+                        column: x => x.IdWarehouseNavigationId,
                         principalTable: "Warehouses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -380,25 +380,26 @@ namespace backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ExportId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false)
+                    IdExport = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdProduct = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IdExportNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    IdProductNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_WarehouseExportDetails", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WarehouseExportDetails_Products_ProductId",
-                        column: x => x.ProductId,
+                        name: "FK_WarehouseExportDetails_Products_IdProductNavigationId",
+                        column: x => x.IdProductNavigationId,
                         principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_WarehouseExportDetails_WarehouseExports_ExportId",
-                        column: x => x.ExportId,
+                        name: "FK_WarehouseExportDetails_WarehouseExports_IdExportNavigationId",
+                        column: x => x.IdExportNavigationId,
                         principalTable: "WarehouseExports",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -406,25 +407,33 @@ namespace backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    WarehouseId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false)
+                    IdWarehouse = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdProduct = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdSupplier = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IdWarehouseNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    IdProductNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    IdSupplierNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_WarehouseProducts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WarehouseProducts_Products_ProductId",
-                        column: x => x.ProductId,
+                        name: "FK_WarehouseProducts_Products_IdProductNavigationId",
+                        column: x => x.IdProductNavigationId,
                         principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_WarehouseProducts_Warehouses_WarehouseId",
-                        column: x => x.WarehouseId,
+                        name: "FK_WarehouseProducts_Suppliers_IdSupplierNavigationId",
+                        column: x => x.IdSupplierNavigationId,
+                        principalTable: "Suppliers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_WarehouseProducts_Warehouses_IdWarehouseNavigationId",
+                        column: x => x.IdWarehouseNavigationId,
                         principalTable: "Warehouses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -432,25 +441,26 @@ namespace backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ReceiptId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false)
+                    IdReceipt = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdProduct = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IdReceiptNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    IdProductNavigationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_WarehouseReceiptDetails", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WarehouseReceiptDetails_Products_ProductId",
-                        column: x => x.ProductId,
+                        name: "FK_WarehouseReceiptDetails_Products_IdProductNavigationId",
+                        column: x => x.IdProductNavigationId,
                         principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_WarehouseReceiptDetails_WarehouseReceipts_ReceiptId",
-                        column: x => x.ReceiptId,
+                        name: "FK_WarehouseReceiptDetails_WarehouseReceipts_IdReceiptNavigationId",
+                        column: x => x.IdReceiptNavigationId,
                         principalTable: "WarehouseReceipts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -528,49 +538,54 @@ namespace backend.Migrations
                 column: "IdUserNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseExportDetails_ExportId",
+                name: "IX_WarehouseExportDetails_IdExportNavigationId",
                 table: "WarehouseExportDetails",
-                column: "ExportId");
+                column: "IdExportNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseExportDetails_ProductId",
+                name: "IX_WarehouseExportDetails_IdProductNavigationId",
                 table: "WarehouseExportDetails",
-                column: "ProductId");
+                column: "IdProductNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseExports_WarehouseId",
+                name: "IX_WarehouseExports_IdWarehouseNavigationId",
                 table: "WarehouseExports",
-                column: "WarehouseId");
+                column: "IdWarehouseNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseProducts_ProductId",
+                name: "IX_WarehouseProducts_IdProductNavigationId",
                 table: "WarehouseProducts",
-                column: "ProductId");
+                column: "IdProductNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseProducts_WarehouseId",
+                name: "IX_WarehouseProducts_IdSupplierNavigationId",
                 table: "WarehouseProducts",
-                column: "WarehouseId");
+                column: "IdSupplierNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseReceiptDetails_ProductId",
+                name: "IX_WarehouseProducts_IdWarehouseNavigationId",
+                table: "WarehouseProducts",
+                column: "IdWarehouseNavigationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WarehouseReceiptDetails_IdProductNavigationId",
                 table: "WarehouseReceiptDetails",
-                column: "ProductId");
+                column: "IdProductNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseReceiptDetails_ReceiptId",
+                name: "IX_WarehouseReceiptDetails_IdReceiptNavigationId",
                 table: "WarehouseReceiptDetails",
-                column: "ReceiptId");
+                column: "IdReceiptNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseReceipts_SupplierId",
+                name: "IX_WarehouseReceipts_IdSupplierNavigationId",
                 table: "WarehouseReceipts",
-                column: "SupplierId");
+                column: "IdSupplierNavigationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WarehouseReceipts_WarehouseId",
+                name: "IX_WarehouseReceipts_IdWarehouseNavigationId",
                 table: "WarehouseReceipts",
-                column: "WarehouseId");
+                column: "IdWarehouseNavigationId");
         }
 
         /// <inheritdoc />

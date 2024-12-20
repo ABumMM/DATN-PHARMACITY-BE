@@ -33,11 +33,27 @@ namespace backend.Controllers
                 if (supplier == null)
                     return NotFound(new { message = "Nhà cung cấp không tồn tại." });
 
+                // Gán Id mới cho WarehouseReceipts
+                receipt.Id = Guid.NewGuid();
+
                 db.WarehouseReceipts.Add(receipt);
+                await db.SaveChangesAsync(); // Lưu WarehouseReceipts trước để lấy Id
 
                 foreach (var detail in receipt.ReceiptDetails)
                 {
+                    // Sửa cách đặt tên cho đúng quy ước camelCase
                     var expirationDate = detail.ExpirationDate ?? DateTime.MaxValue;
+
+                    // Thêm chi tiết phiếu nhập vào database
+                    db.WarehouseReceiptDetails.Add(new WarehouseReceiptDetails
+                    {
+                        Id = Guid.NewGuid(),
+                        IdReceipt = receipt.Id, // Gán Id của WarehouseReceipts vừa tạo
+                        IdProduct = detail.IdProduct, // Sử dụng đúng tên thuộc tính
+                        Quantity = detail.Quantity, // Sử dụng đúng tên thuộc tính
+                        ExpirationDate = expirationDate // Sử dụng đúng tên thuộc tính
+                    });
+
                     var warehouseProduct = await db.WarehouseProducts
                         .FirstOrDefaultAsync(wp => wp.IdWarehouse == receipt.IdWarehouse && wp.IdProduct == detail.IdProduct);
 
@@ -95,7 +111,6 @@ namespace backend.Controllers
             }
         }
 
-        // Tạo phiếu xuất kho
         [HttpPost("export")]
         public async Task<ActionResult> CreateExport([FromBody] WarehouseExports export)
         {
@@ -109,18 +124,37 @@ namespace backend.Controllers
                 if (warehouse == null)
                     return NotFound(new { message = "Kho hàng không tồn tại." });
 
+                // Gán Id mới cho WarehouseExports
+                export.Id = Guid.NewGuid();
+                export.ExportDate = DateTime.Now;
+
                 db.WarehouseExports.Add(export);
+                await db.SaveChangesAsync(); // Lưu WarehouseExports trước để lấy Id
 
                 foreach (var detail in export.ExportDetails)
                 {
-                    var expirationDate = detail.ExpirationDate;
                     var warehouseProduct = await db.WarehouseProducts
-                        .FirstOrDefaultAsync(wp => wp.IdWarehouse == export.IdWarehouse && wp.IdProduct == detail.IdProduct);
+                        .Where(wp => wp.IdWarehouse == export.IdWarehouse && wp.IdProduct == detail.IdProduct)
+                        .OrderBy(wp => wp.ExpirationDate)
+                        .FirstOrDefaultAsync();
 
                     if (warehouseProduct == null || warehouseProduct.Quantity < detail.Quantity)
                         return BadRequest(new { message = $"Không đủ số lượng sản phẩm (ID: {detail.IdProduct}) trong kho để xuất." });
 
+                    // Thêm chi tiết phiếu xuất vào database
+                    db.WarehouseExportDetails.Add(new WarehouseExportDetails
+                    {
+                        Id = Guid.NewGuid(),
+                        IdExport = export.Id,
+                        IdProduct = detail.IdProduct,
+                        Quantity = detail.Quantity,
+                        ExpirationDate = warehouseProduct.ExpirationDate,
+                    });
+
+                    await db.SaveChangesAsync(); // Lưu WarehouseExportDetails
+
                     warehouseProduct.Quantity -= detail.Quantity;
+
                 }
 
                 await db.SaveChangesAsync();
@@ -178,7 +212,7 @@ namespace backend.Controllers
                                                   productName = product.Name,
                                                   detail.Quantity,
                                                   detail.ExpirationDate
-                                              }).ToList() 
+                                              }).ToList()
                         };
 
             var allData = await _data.ToListAsync();
@@ -232,10 +266,10 @@ namespace backend.Controllers
                                                  productName = product.Name,
                                                  detail.Quantity,
                                                  detail.ExpirationDate
-                                             }).ToList() 
+                                             }).ToList()
                         };
 
-            var allData = await _data.ToListAsync(); 
+            var allData = await _data.ToListAsync();
 
             if (!allData.Any())
             {

@@ -12,8 +12,8 @@ using backend.Models;
 namespace backend.Migrations
 {
     [DbContext(typeof(FinalContext))]
-    [Migration("20241219050829_UpdateIdentityEntitiesV2")]
-    partial class UpdateIdentityEntitiesV2
+    [Migration("20241220023324_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -494,16 +494,16 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("ExpirationDate")
+                    b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("IdExport")
+                    b.Property<Guid>("IdExport")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdExportNavigationId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdProduct")
+                    b.Property<Guid>("IdProduct")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdProductNavigationId")
@@ -527,10 +527,10 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("ExportDate")
+                    b.Property<DateTime>("ExportDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("IdWarehouse")
+                    b.Property<Guid>("IdWarehouse")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdWarehouseNavigationId")
@@ -552,16 +552,22 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("ExpirationDate")
+                    b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("IdProduct")
+                    b.Property<Guid>("IdProduct")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdProductNavigationId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdWarehouse")
+                    b.Property<Guid>("IdSupplier")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IdSupplierNavigationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdWarehouse")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdWarehouseNavigationId")
@@ -573,6 +579,8 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("IdProductNavigationId");
+
+                    b.HasIndex("IdSupplierNavigationId");
 
                     b.HasIndex("IdWarehouseNavigationId");
 
@@ -588,13 +596,13 @@ namespace backend.Migrations
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("IdProduct")
+                    b.Property<Guid>("IdProduct")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdProductNavigationId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdReceipt")
+                    b.Property<Guid>("IdReceipt")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdReceiptNavigationId")
@@ -618,13 +626,13 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdSupplier")
+                    b.Property<Guid>("IdSupplier")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdSupplierNavigationId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdWarehouse")
+                    b.Property<Guid>("IdWarehouse")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdWarehouseNavigationId")
@@ -633,7 +641,7 @@ namespace backend.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("ReceiptDate")
+                    b.Property<DateTime>("ReceiptDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -837,11 +845,17 @@ namespace backend.Migrations
                         .WithMany()
                         .HasForeignKey("IdProductNavigationId");
 
+                    b.HasOne("backend.Models.Suppliers", "IdSupplierNavigation")
+                        .WithMany()
+                        .HasForeignKey("IdSupplierNavigationId");
+
                     b.HasOne("backend.Models.Warehouses", "IdWarehouseNavigation")
                         .WithMany("WarehouseProducts")
                         .HasForeignKey("IdWarehouseNavigationId");
 
                     b.Navigation("IdProductNavigation");
+
+                    b.Navigation("IdSupplierNavigation");
 
                     b.Navigation("IdWarehouseNavigation");
                 });

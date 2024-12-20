@@ -28,13 +28,14 @@ namespace backend.Controllers
             {
                 WarehouseProductId = wp.Id,
                 WarehouseId = wp.IdWarehouse,
-                WarehouseName = wp.IdWarehouseNavigation.Name,
+                WarehouseName = wp.IdWarehouseNavigation?.Name,
                 ProductId = wp.IdProduct,
-                ProductName = wp.IdProductNavigation.Name,
+                ProductName = wp.IdProductNavigation?.Name,
+                SupplierId = wp.IdSupplier,
+                SupplierName = wp.IdSupplierNavigation?.Name,
                 Quantity = wp.Quantity,
-                ExpirationDate = wp.ExpirationDate.ToString("yyyy-MM-dd") ?? "Không có ngày hết hạn"
+                ExpirationDate = wp.ExpirationDate.ToString("yyyy-MM-dd")
             });
-
 
             return Ok(new
             {
@@ -43,7 +44,6 @@ namespace backend.Controllers
                 data = result
             });
         }
-
 
         // Xóa sản phẩm khỏi kho
         [HttpDelete("deletewarehouseproduct/{id}")]
@@ -54,6 +54,15 @@ namespace backend.Controllers
                 var warehouseProduct = await db.WarehouseProducts.FindAsync(id);
                 if (warehouseProduct == null)
                     return NotFound(new { message = "Không tìm thấy sản phẩm cần xóa." });
+
+                // Kiểm tra xem sản phẩm có trong phiếu nhập/xuất nào không
+                var isInReceipt = await db.WarehouseReceiptDetails.AnyAsync(d => d.IdProduct == warehouseProduct.IdProduct);
+                var isInExport = await db.WarehouseExportDetails.AnyAsync(d => d.IdProduct == warehouseProduct.IdProduct);
+
+                if (isInReceipt || isInExport)
+                {
+                    return BadRequest(new { message = "Sản phẩm đã có trong phiếu nhập/xuất, không thể xóa." });
+                }
 
                 db.WarehouseProducts.Remove(warehouseProduct);
                 await db.SaveChangesAsync();

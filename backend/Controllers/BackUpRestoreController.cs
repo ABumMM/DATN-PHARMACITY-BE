@@ -10,7 +10,7 @@ namespace backend.Controllers
     public class BackUpController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly string _backupPath = @"D:\OneDrive\Máy tính\DATN\pharmacy\BackUpRestore";
+        private readonly string _backupPath = @"D:\Backup";
 
         public BackUpController(IConfiguration configuration)
         {
